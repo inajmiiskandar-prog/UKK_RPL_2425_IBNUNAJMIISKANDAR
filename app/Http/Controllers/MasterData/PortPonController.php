@@ -100,8 +100,6 @@ class PortPonController extends Controller
 
     public function update(Request $request, PortPon $portPon)
     {
-        \Log::info('PortPon Update - Request Data:', $request->all());
-
         $request->validate([
             'nomor_port' => 'required|integer|min:1',
             'tipe_kartu' => 'required|string|max:50',
@@ -129,13 +127,11 @@ class PortPonController extends Controller
                 'id_odp' => $request->id_odp ?: null,
             ]);
 
-            \App\Models\ActivityLog::log('PORTPON_UPDATED', "Mengubah Port PON: {$portPon->nomor_port}", auth()->id());
             DB::commit();
 
             return redirect()->route('masterdata.port-pon.index')->with('success', 'Port PON berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error('PortPon Update ERROR: ' . $e->getMessage());
             return redirect()->back()->withInput()->with('error', 'Gagal memperbarui Port PON: ' . $e->getMessage());
         }
     }
