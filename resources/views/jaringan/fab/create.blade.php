@@ -73,9 +73,12 @@
                 <select id="id_user" name="id_user" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                     <option value="">Pilih Sales</option>
                     @foreach($sales as $s)
-                    <option value="{{ $s->id_user }}" {{ old('id_user') == $s->id_user ? 'selected' : '' }}>{{ $s->nama }}</option>
+                    <option value="{{ $s->id_user }}" {{ (old('id_user', $selectedSales ?? null) == $s->id_user) ? 'selected' : '' }}>{{ $s->nama }}</option>
                     @endforeach
                 </select>
+                @if(auth()->user()->role === 'SALES')
+                <p class="mt-1 text-xs text-gray-500">Otomatis dipilih berdasarkan akun login</p>
+                @endif
             </div>
         </div>
         <div>

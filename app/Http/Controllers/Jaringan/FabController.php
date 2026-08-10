@@ -46,7 +46,10 @@ class FabController extends Controller
         $pakets = Paket::orderBy('nama_paket')->get();
         $sales = User::where('role', 'SALES')->where('status', true)->orderBy('nama')->get();
 
-        return view('jaringan.fab.create', compact('areas', 'pakets', 'sales'));
+        // Auto-select sales based on logged-in user
+        $selectedSales = auth()->user()->role === 'SALES' ? auth()->id() : null;
+
+        return view('jaringan.fab.create', compact('areas', 'pakets', 'sales', 'selectedSales'));
     }
 
     public function store(Request $request)
@@ -61,7 +64,7 @@ class FabController extends Controller
             'status' => 'required|in:OPEN,AKTIF',
             'id_area' => 'required|exists:area,id_area',
             'id_paket' => 'required|exists:paket,id_paket',
-            'id_user' => 'nullable|exists:users,id_user',
+            'id_user' => 'nullable',
         ], [
             'nama_pelanggan.required' => 'Nama Pelanggan wajib diisi!',
             'nik.required' => 'NIK wajib diisi!',
@@ -87,8 +90,8 @@ class FabController extends Controller
                 'nik' => $request->nik,
                 'no_hp' => $request->no_hp,
                 'alamat' => $request->alamat,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
+                'latitude' => $request->latitude ?: 0,
+                'longitude' => $request->longitude ?: 0,
                 'status' => $request->status,
                 'id_area' => $request->id_area,
                 'id_paket' => $request->id_paket,
@@ -133,7 +136,7 @@ class FabController extends Controller
             'status' => 'required|in:OPEN,AKTIF',
             'id_area' => 'required|exists:area,id_area',
             'id_paket' => 'required|exists:paket,id_paket',
-            'id_user' => 'nullable|exists:users,id_user',
+            'id_user' => 'nullable',
         ]);
 
         try {
@@ -144,8 +147,8 @@ class FabController extends Controller
                 'nik' => $request->nik,
                 'no_hp' => $request->no_hp,
                 'alamat' => $request->alamat,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
+                'latitude' => $request->latitude ?: 0,
+                'longitude' => $request->longitude ?: 0,
                 'status' => $request->status,
                 'id_area' => $request->id_area,
                 'id_paket' => $request->id_paket,
