@@ -39,10 +39,20 @@
         <div class="mb-4">
             <label class="mb-2 block text-xs font-medium text-gray-500">Foto OLT</label>
             <div class="relative overflow-hidden rounded-xl border border-gray-200 dark:border-slate-600">
-                <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto {{ $olt->nama_olt }}" class="h-48 w-full object-cover">
+                <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto {{ $olt->nama_olt }}" class="h-48 w-full object-cover cursor-pointer" onclick="openFullscreen(this)">
                 <a href="{{ asset('storage/' . $olt->foto_olt) }}" target="_blank" class="absolute right-2 top-2 rounded-lg bg-black/50 p-2 text-white hover:bg-black/70">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 </a>
+            </div>
+        </div>
+        @else
+        <div class="mb-4">
+            <label class="mb-2 block text-xs font-medium text-gray-500">Foto OLT</label>
+            <div class="flex h-48 w-full items-center justify-center rounded-xl border border-gray-200 bg-gray-50 dark:border-slate-600 dark:bg-slate-700">
+                <div class="text-center text-gray-400">
+                    <svg class="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <p class="mt-2 text-sm">Belum ada foto</p>
+                </div>
             </div>
         </div>
         @endif
@@ -106,14 +116,32 @@
         <div id="map" class="h-[500px] w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
     </div>
 </div>
+
+{{-- Fullscreen Modal --}}
+<div id="fullscreenModal" class="fixed inset-0 z-50 hidden bg-black/90" onclick="closeFullscreen()">
+    <button class="absolute right-4 top-4 rounded-lg bg-white/20 p-2 text-white hover:bg-white/30">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <img id="fullscreenImage" src="" alt="Fullscreen" class="mx-auto max-h-full max-w-full object-contain">
+</div>
 @endsection
 
+@push('scripts')
 <script>
+function openFullscreen(img) {
+    document.getElementById('fullscreenImage').src = img.src;
+    document.getElementById('fullscreenModal').classList.remove('hidden');
+}
+
+function closeFullscreen() {
+    document.getElementById('fullscreenModal').classList.add('hidden');
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     var oltLat = {{ $olt->latitude ?? 'null' }};
     var oltLng = {{ $olt->longitude ?? 'null' }};
-    var popLat = {{ $olt->pop->latitude ?? 'null' }};
-    var popLng = {{ $olt->pop->longitude ?? 'null' }};
+    var popLat = {{ $olt->pop && $olt->pop->latitude ? $olt->pop->latitude : 'null' }};
+    var popLng = {{ $olt->pop && $olt->pop->longitude ? $olt->pop->longitude : 'null' }};
 
     var map = L.map('map');
 
@@ -210,4 +238,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-@endsection
+@endpush
