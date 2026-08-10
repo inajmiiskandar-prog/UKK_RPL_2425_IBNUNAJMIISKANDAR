@@ -41,17 +41,19 @@ class OltController extends Controller
     {
         $request->validate([
             'nama_olt' => 'required|string|max:100',
-            'lokasi' => 'required|string|max:255',
+            'lokasi' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'id_pop' => 'required|exists:pop,id_pop',
             'ip_olt' => 'nullable|string|max:50',
             'username_olt' => 'nullable|string|max:50',
             'password_olt' => 'nullable|string|max:100',
+            'foto_olt' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ], [
             'nama_olt.required' => 'Nama OLT wajib diisi!',
-            'lokasi.required' => 'Lokasi wajib diisi!',
             'id_pop.required' => 'POP wajib dipilih!',
+            'foto_olt.image' => 'File foto harus berupa gambar!',
+            'foto_olt.mimes' => 'Format foto harus jpeg, png, jpg, gif, atau svg!',
         ]);
 
         try {
@@ -60,16 +62,26 @@ class OltController extends Controller
             $lastNumber = $lastOlt ? (int) substr($lastOlt->kode_olt, 3) : 0;
             $kodeOlt = 'OLT' . str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
 
+            // Get POP data for location
+            $pop = Pop::find($request->id_pop);
+
+            // Handle foto upload
+            $fotoPath = null;
+            if ($request->hasFile('foto_olt')) {
+                $fotoPath = $request->file('foto_olt')->store('olt-photos', 'public');
+            }
+
             Olt::create([
                 'kode_olt' => $kodeOlt,
                 'nama_olt' => $request->nama_olt,
-                'lokasi' => $request->lokasi,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
+                'lokasi' => $request->lokasi ?? ($pop ? $pop->lokasi : null),
+                'latitude' => $request->latitude ?? ($pop ? $pop->latitude : null),
+                'longitude' => $request->longitude ?? ($pop ? $pop->longitude : null),
                 'id_pop' => $request->id_pop,
                 'ip_olt' => $request->ip_olt,
                 'username_olt' => $request->username_olt,
                 'password_olt' => $request->password_olt,
+                'foto_olt' => $fotoPath,
             ]);
 
             \App\Models\ActivityLog::log('OLT_CREATED', "Menambah OLT: {$request->nama_olt}", auth()->id());
@@ -98,26 +110,42 @@ class OltController extends Controller
     {
         $request->validate([
             'nama_olt' => 'required|string|max:100',
-            'lokasi' => 'required|string|max:255',
+            'lokasi' => 'nullable|string|max:255',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
             'id_pop' => 'required|exists:pop,id_pop',
             'ip_olt' => 'nullable|string|max:50',
             'username_olt' => 'nullable|string|max:50',
             'password_olt' => 'nullable|string|max:100',
+            'foto_olt' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         try {
             DB::beginTransaction();
+
+            // Get POP data for location
+            $pop = Pop::find($request->id_pop);
+
+            // Handle foto upload
+            $fotoPath = $olt->foto_olt;
+            if ($request->hasFile('foto_olt')) {
+                // Delete old photo if exists
+                if ($olt->foto_olt && \Storage::disk('public')->exists($olt->foto_olt)) {
+                    \Storage::disk('public')->delete($olt->foto_olt);
+                }
+                $fotoPath = $request->file('foto_olt')->store('olt-photos', 'public');
+            }
+
             $olt->update([
                 'nama_olt' => $request->nama_olt,
-                'lokasi' => $request->lokasi,
-                'latitude' => $request->latitude,
-                'longitude' => $request->longitude,
+                'lokasi' => $request->lokasi ?? ($pop ? $pop->lokasi : null),
+                'latitude' => $request->latitude ?? ($pop ? $pop->latitude : null),
+                'longitude' => $request->longitude ?? ($pop ? $pop->longitude : null),
                 'id_pop' => $request->id_pop,
                 'ip_olt' => $request->ip_olt,
                 'username_olt' => $request->username_olt,
                 'password_olt' => $request->password_olt,
+                'foto_olt' => $fotoPath,
             ]);
 
             \App\Models\ActivityLog::log('OLT_UPDATED', "Mengubah OLT: {$olt->nama_olt}", auth()->id());

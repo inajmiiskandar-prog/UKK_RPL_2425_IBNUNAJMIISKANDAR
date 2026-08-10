@@ -191,6 +191,8 @@ class BaaController extends Controller
             'speed_download' => 'nullable|string|max:20',
             'speed_upload' => 'nullable|string|max:20',
             'id_user' => 'required|exists:users,id_user',
+            'teknisi_ids' => 'nullable|array',
+            'teknisi_ids.*' => 'exists:users,id_user',
         ]);
 
         try {
@@ -212,6 +214,17 @@ class BaaController extends Controller
                 'speed_upload' => $request->speed_upload,
                 'id_user' => $request->id_user,
             ]);
+
+            // Update teknisi tambahan
+            $baa->teknisiTambahan()->delete();
+            if ($request->teknisi_ids) {
+                foreach ($request->teknisi_ids as $teknisiId) {
+                    BaaTeknisi::create([
+                        'id_baa' => $baa->id_baa,
+                        'id_user' => $teknisiId,
+                    ]);
+                }
+            }
 
             \App\Models\ActivityLog::log('BAA_UPDATED', "Mengubah BAA: {$baa->kode_baa}", auth()->id());
             DB::commit();

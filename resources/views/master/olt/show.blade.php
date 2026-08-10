@@ -21,44 +21,92 @@
     </a>
 </div>
 
-<div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-    <div class="mb-4 flex items-center gap-3">
-        <div class="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
-            <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+<div class="grid gap-6 lg:grid-cols-3">
+    {{-- Info Card --}}
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-4 flex items-center gap-3">
+            <div class="rounded-full bg-green-100 p-2 dark:bg-green-900/30">
+                <svg class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg>
+            </div>
+            <div>
+                <h2 class="font-display text-lg font-bold text-gray-800 dark:text-white">{{ $olt->nama_olt }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $olt->kode_olt }} • {{ $olt->pop->nama_pop ?? '-' }} • {{ $olt->pop->area->nama_area ?? '-' }}</p>
+            </div>
         </div>
-        <div>
-            <h2 class="font-display text-lg font-bold text-gray-800 dark:text-white">{{ $olt->nama_olt }}</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $olt->kode_olt }} • {{ $olt->pop->nama_pop ?? '-' }} • {{ $olt->pop->area->nama_area ?? '-' }}</p>
+
+        {{-- Foto OLT --}}
+        @if($olt->foto_olt)
+        <div class="mb-4">
+            <label class="mb-2 block text-xs font-medium text-gray-500">Foto OLT</label>
+            <div class="relative overflow-hidden rounded-xl border border-gray-200 dark:border-slate-600">
+                <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto {{ $olt->nama_olt }}" class="h-48 w-full object-cover">
+                <a href="{{ asset('storage/' . $olt->foto_olt) }}" target="_blank" class="absolute right-2 top-2 rounded-lg bg-black/50 p-2 text-white hover:bg-black/70">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </a>
+            </div>
+        </div>
+        @endif
+
+        {{-- Info Detail --}}
+        <div class="space-y-3 text-sm">
+            <div class="flex justify-between">
+                <span class="text-gray-500">IP Address</span>
+                <span class="font-medium dark:text-white">{{ $olt->ip_olt ?? '-' }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Username</span>
+                <span class="font-medium dark:text-white">{{ $olt->username_olt ?? '-' }}</span>
+            </div>
+            @if($olt->lokasi)
+            <div class="flex justify-between">
+                <span class="text-gray-500">Lokasi</span>
+                <span class="max-w-[60%] text-right font-medium dark:text-white">{{ $olt->lokasi }}</span>
+            </div>
+            @endif
+            <div class="flex justify-between">
+                <span class="text-gray-500">Latitude</span>
+                <span class="font-medium dark:text-white">{{ $olt->latitude ?? '-' }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Longitude</span>
+                <span class="font-medium dark:text-white">{{ $olt->longitude ?? '-' }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Jumlah ODP</span>
+                <span class="font-medium dark:text-white">{{ $olt->odps->count() ?? 0 }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500">Jumlah Port</span>
+                <span class="font-medium dark:text-white">{{ $olt->portPons->count() ?? 0 }}</span>
+            </div>
         </div>
     </div>
 
-    {{-- Legend --}}
-    <div class="mb-3 flex flex-wrap gap-4 text-xs">
-        <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-green-600"></span> OLT</span>
-        <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-blue-600"></span> POP</span>
-        <span class="flex items-center gap-1"><span class="h-3 w-3 bg-orange-500"></span> Rute</span>
-    </div>
-
-    {{-- Search Bar --}}
-    <div class="mb-3">
-        <div class="relative">
-            <input type="text" id="search-input" placeholder="Cari alamat/lokasi..."
-                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-gray-400">
-            <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
+    {{-- Map Card --}}
+    <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        {{-- Legend --}}
+        <div class="mb-3 flex flex-wrap gap-4 text-xs">
+            <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-green-600"></span> OLT</span>
+            <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-blue-600"></span> POP</span>
+            <span class="flex items-center gap-1"><span class="h-3 w-3 bg-orange-500"></span> Rute</span>
         </div>
-    </div>
 
-    {{-- Peta --}}
-    <div id="map" class="h-[500px] w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
+        {{-- Search Bar --}}
+        <div class="mb-3">
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="Cari alamat/lokasi..."
+                    class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-gray-400">
+                <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+        </div>
 
-    @if($olt->lokasi)
-    <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-        <span class="font-medium">Lokasi:</span> {{ $olt->lokasi }}
+        {{-- Peta --}}
+        <div id="map" class="h-[500px] w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
     </div>
-    @endif
 </div>
+@endsection
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

@@ -27,7 +27,7 @@
     </div>
     @endif
 
-    <form action="{{ route('masterdata.olt.store') }}" method="POST" class="space-y-5">
+    <form action="{{ route('masterdata.olt.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5">
         @csrf
         <div class="grid gap-5 md:grid-cols-2">
             <div>
@@ -39,14 +39,15 @@
                 <select id="id_pop" name="id_pop" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required onchange="updateCoordsFromPop()">
                     <option value="">Pilih POP</option>
                     @foreach($pops as $pop)
-                    <option value="{{ $pop->id_pop }}" data-lat="{{ $pop->latitude }}" data-lng="{{ $pop->longitude }}" {{ old('id_pop') == $pop->id_pop ? 'selected' : '' }}>{{ $pop->kode_pop }} - {{ $pop->nama_pop }}</option>
+                    <option value="{{ $pop->id_pop }}" data-lat="{{ $pop->latitude }}" data-lng="{{ $pop->longitude }}" data-lokasi="{{ $pop->lokasi }}" {{ old('id_pop') == $pop->id_pop ? 'selected' : '' }}>{{ $pop->kode_pop }} - {{ $pop->nama_pop }}</option>
                     @endforeach
                 </select>
             </div>
         </div>
         <div>
-            <label for="lokasi" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi <span class="text-red-500">*</span></label>
-            <input type="text" id="lokasi" name="lokasi" value="{{ old('lokasi') }}" placeholder="Masukkan lokasi OLT" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>
+            <label for="lokasi" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi (Opsional)</label>
+            <input type="text" id="lokasi" name="lokasi" value="{{ old('lokasi') }}" placeholder="Akan auto-fill dari POP jika kosong" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            <p class="mt-1 text-xs text-gray-500">💡 Lokasi akan otomatis terisi dari POP yang dipilih</p>
         </div>
 
         {{-- Peta Interaktif --}}
@@ -81,6 +82,11 @@
         <div>
             <label for="password_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Password</label>
             <input type="password" id="password_olt" name="password_olt" placeholder="Password OLT" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+        </div>
+        <div>
+            <label for="foto_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Foto OLT</label>
+            <input type="file" id="foto_olt" name="foto_olt" accept="image/*" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-purple-700 hover:file:bg-purple-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-purple-900 dark:file:text-purple-300">
+            <p class="mt-1 text-xs text-gray-500">Format: jpeg, png, jpg, gif, svg. Maksimal 2MB</p>
         </div>
         <div class="flex items-center gap-3 pt-4">
             <button type="submit" class="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700 hover:shadow-xl">
@@ -135,12 +141,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Auto update coords when POP is selected
+// Auto update coords and lokasi when POP is selected
 function updateCoordsFromPop() {
     var select = document.getElementById('id_pop');
     var option = select.options[select.selectedIndex];
     var lat = option.getAttribute('data-lat');
     var lng = option.getAttribute('data-lng');
+    var lokasi = option.getAttribute('data-lokasi');
+
+    // Auto-fill lokasi from POP if empty
+    var lokasiInput = document.getElementById('lokasi');
+    if (!lokasiInput.value && lokasi) {
+        lokasiInput.value = lokasi;
+    }
 
     if (lat && lng) {
         document.getElementById('latitude').value = lat;
@@ -158,5 +171,13 @@ function updateCoordsFromPop() {
         L.marker([lat, lng], { draggable: true }).addTo(map);
     }
 }
+
+// Initialize on page load if POP is already selected
+document.addEventListener('DOMContentLoaded', function() {
+    var select = document.getElementById('id_pop');
+    if (select && select.value) {
+        updateCoordsFromPop();
+    }
+});
 </script>
 @endsection
