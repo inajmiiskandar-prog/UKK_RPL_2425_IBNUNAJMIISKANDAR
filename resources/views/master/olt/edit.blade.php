@@ -39,65 +39,68 @@
                 <input type="text" id="nama_olt" name="nama_olt" value="{{ old('nama_olt', $olt->nama_olt) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>
             </div>
         </div>
-        <div class="grid gap-5 md:grid-cols-2">
-            <div>
-                <label for="id_pop" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">POP <span class="text-red-500">*</span></label>
-                <select id="id_pop" name="id_pop" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required onchange="updateCoordsFromPop()">
-                    @foreach($pops as $pop)
-                    <option value="{{ $pop->id_pop }}" data-lat="{{ $pop->latitude }}" data-lng="{{ $pop->longitude }}" data-lokasi="{{ $pop->lokasi }}" {{ $olt->id_pop == $pop->id_pop ? 'selected' : '' }}>{{ $pop->kode_pop }} - {{ $pop->nama_pop }}</option>
-                    @endforeach
-                </select>
+
+        {{-- Info & Credential Section --}}
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-700/50">
+            <h4 class="mb-3 font-semibold text-gray-700 dark:text-gray-200">Info & Credential</h4>
+            <div class="grid gap-4 md:grid-cols-2">
+                <div>
+                    <label for="id_pop" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">POP <span class="text-red-500">*</span></label>
+                    <select id="id_pop" name="id_pop" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required onchange="updateCoordsFromPop()">
+                        @foreach($pops as $pop)
+                        <option value="{{ $pop->id_pop }}" data-lat="{{ $pop->latitude }}" data-lng="{{ $pop->longitude }}" data-lokasi="{{ $pop->lokasi }}" {{ $olt->id_pop == $pop->id_pop ? 'selected' : '' }}>{{ $pop->kode_pop }} - {{ $pop->nama_pop }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="lokasi" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi</label>
+                    <input type="text" id="lokasi" name="lokasi" value="{{ old('lokasi', $olt->lokasi) }}" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+                <div>
+                    <label for="ip_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">IP Address</label>
+                    <input type="text" id="ip_olt" name="ip_olt" value="{{ old('ip_olt', $olt->ip_olt) }}" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+                <div>
+                    <label for="username_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Username</label>
+                    <input type="text" id="username_olt" name="username_olt" value="{{ old('username_olt', $olt->username_olt) }}" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
             </div>
-            <div>
-                <label for="lokasi" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi</label>
-                <input type="text" id="lokasi" name="lokasi" value="{{ old('lokasi', $olt->lokasi) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            <div class="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                    <label for="password_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Password</label>
+                    <input type="password" id="password_olt" name="password_olt" placeholder="Kosongkan jika tidak diubah" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                </div>
+                <div>
+                    <label for="foto_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Foto OLT</label>
+                    @if($olt->foto_olt)
+                    <div class="mb-2">
+                        <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto OLT" class="h-16 w-auto rounded-lg border border-gray-200 dark:border-slate-600">
+                        <span class="ml-2 text-xs text-gray-500">Foto saat ini</span>
+                    </div>
+                    @endif
+                    <input type="file" id="foto_olt" name="foto_olt" accept="image/*" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-purple-700 hover:file:bg-purple-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-purple-900 dark:file:text-purple-300">
+                    <p class="mt-1 text-xs text-gray-500">Format: jpeg, png, jpg, gif, svg. Maksimal 2MB</p>
+                </div>
             </div>
         </div>
 
-        {{-- Peta Interaktif --}}
-        <div>
-            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Lokasi (Klik atau geser marker pada peta, atau cari lokasi)
-            </label>
+        {{-- Peta Interaktif (Bottom) --}}
+        <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+            <h4 class="mb-3 font-semibold text-gray-700 dark:text-gray-200">Lokasi Pada Peta</h4>
             <div id="map" class="mb-3 h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
-            <div class="grid gap-5 md:grid-cols-2">
+            <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label for="latitude" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Latitude</label>
-                    <input type="text" id="latitude" name="latitude" value="{{ old('latitude', $olt->latitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
+                    <input type="text" id="latitude" name="latitude" value="{{ old('latitude', $olt->latitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
                 </div>
                 <div>
                     <label for="longitude" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Longitude</label>
-                    <input type="text" id="longitude" name="longitude" value="{{ old('longitude', $olt->longitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
+                    <input type="text" id="longitude" name="longitude" value="{{ old('longitude', $olt->longitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
                 </div>
             </div>
             <p class="mt-2 text-xs text-gray-500">💡 Klik pada peta atau geser marker untuk menentukan lokasi</p>
         </div>
 
-        <div class="grid gap-5 md:grid-cols-2">
-            <div>
-                <label for="ip_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">IP Address</label>
-                <input type="text" id="ip_olt" name="ip_olt" value="{{ old('ip_olt', $olt->ip_olt) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-            </div>
-            <div>
-                <label for="username_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Username</label>
-                <input type="text" id="username_olt" name="username_olt" value="{{ old('username_olt', $olt->username_olt) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-            </div>
-        </div>
-        <div>
-            <label for="password_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Password</label>
-            <input type="password" id="password_olt" name="password_olt" placeholder="Kosongkan jika tidak diubah" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-        </div>
-        <div>
-            <label for="foto_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Foto OLT</label>
-            @if($olt->foto_olt)
-            <div class="mb-2">
-                <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto OLT" class="h-32 w-auto rounded-lg border border-gray-200 dark:border-slate-600">
-                <p class="mt-1 text-xs text-gray-500">Foto saat ini</p>
-            </div>
-            @endif
-            <input type="file" id="foto_olt" name="foto_olt" accept="image/*" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-purple-700 hover:file:bg-purple-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-purple-900 dark:file:text-purple-300">
-            <p class="mt-1 text-xs text-gray-500">Format: jpeg, png, jpg, gif, svg. Maksimal 2MB. Kosongkan jika tidak ingin更换.</p>
-        </div>
         <div class="flex items-center gap-3 pt-4">
             <button type="submit" class="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700 hover:shadow-xl">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
