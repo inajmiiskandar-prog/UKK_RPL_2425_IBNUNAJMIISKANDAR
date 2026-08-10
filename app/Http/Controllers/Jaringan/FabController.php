@@ -31,7 +31,7 @@ class FabController extends Controller
             $query->where('id_area', $request->area);
         }
 
-        $fabs = $query->orderBy('created_at', 'desc')->paginate(10);
+        $fabs = $query->orderBy('createdAt', 'desc')->paginate(10);
         $fabs->appends($request->all());
 
         $areas = Area::orderBy('nama_area')->get();
