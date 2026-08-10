@@ -52,6 +52,15 @@
                 </select>
             </div>
         </div>
+        <div>
+            <label for="id_odp" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">ODP (opsional)</label>
+            <select id="id_odp" name="id_odp" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                <option value="">Pilih ODP</option>
+                @foreach($odps as $odp)
+                <option value="{{ $odp->id_odp }}" {{ old('id_odp', $portPon->id_odp) == $odp->id_odp ? 'selected' : '' }}>{{ $odp->kode_odp }} - {{ $odp->nama_odp }}</option>
+                @endforeach
+            </select>
+        </div>
         <div class="flex items-center gap-3 pt-4">
             <button type="submit" class="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700 hover:shadow-xl">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
