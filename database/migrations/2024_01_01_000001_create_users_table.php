@@ -12,13 +12,15 @@ return new class extends Migration
             $table->id('id_user');
             $table->string('kode_user')->unique();
             $table->string('nama');
-            $table->string('username')->unique();
+            $table->string('username')->nullable()->unique();
             $table->string('password');
-            $table->enum('jkl', ['LAKI_LAKI', 'PEREMPUAN']);
+            $table->enum('jkl', ['LAKI_LAKI', 'PEREMPUAN'])->nullable();
             $table->string('foto')->nullable();
-            $table->enum('role', ['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK']);
+            $table->enum('role', ['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'])->default('SALES');
             $table->string('no_hp')->nullable();
             $table->string('email')->nullable()->unique();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->rememberToken();
             $table->boolean('status')->default(true);
             $table->timestamp('createdAt')->useCurrent();
             $table->timestamp('updatedAt')->useCurrent()->useCurrentOnUpdate();

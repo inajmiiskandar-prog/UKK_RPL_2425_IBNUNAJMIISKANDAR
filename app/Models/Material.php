@@ -26,4 +26,9 @@ class Material extends Model
     {
         return $this->hasMany(BaaDetail::class, 'id_material', 'id_material');
     }
+
+    public function baaDetails()
+    {
+        return $this->hasMany(BaaDetail::class, 'id_material', 'id_material');
+    }
 }

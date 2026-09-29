@@ -13,12 +13,9 @@ class ActivityLog extends Model
 
     protected $fillable = ['type', 'description', 'id_user', 'createdAt'];
 
-    protected function casts(): array
-    {
-        return [
-            'createdAt' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'createdAt' => 'datetime',
+    ];
 
     public function user()
     {
@@ -35,7 +32,7 @@ class ActivityLog extends Model
         return static::create([
             'type' => $type,
             'description' => $description,
-            'id_user' => $userId ?? auth()->id(),
+            'id_user' => $userId ?? auth()->user()->id_user,
             'createdAt' => now(),
         ]);
     }

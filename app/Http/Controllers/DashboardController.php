@@ -84,12 +84,32 @@ class DashboardController extends Controller
             ->orderBy('month')
             ->get();
 
+        // Monthly BAA stats (last 6 months)
+        $monthly_baa = Baa::select(
+            DB::raw('MONTH(createdAt) as month'),
+            DB::raw('YEAR(createdAt) as year'),
+            DB::raw('COUNT(*) as total')
+        )
+            ->where('createdAt', '>=', now()->subMonths(6))
+            ->groupBy(DB::raw('MONTH(createdAt)'), DB::raw('YEAR(createdAt)'))
+            ->orderBy('year')
+            ->orderBy('month')
+            ->get();
+
         // Low stock materials
         $low_stock_materials = Material::whereColumn('stok', '<=', 'minimal_stok')
             ->where('kondisi', 'BAIK')
             ->orderBy('stok')
             ->limit(5)
             ->get();
+
+        // SLA pelanggan FAB yang masih OPEN/pending
+        $pending_fabs = Fab::with(['area', 'paket'])
+            ->where('status', 'OPEN')
+            ->orderBy('createdAt')
+            ->limit(8)
+            ->get();
+        $pending_fab_count = Fab::where('status', 'OPEN')->count();
 
         // Map data - POP, OLT, ODP, FAB with coordinates
         $mapData = [
@@ -107,7 +127,10 @@ class DashboardController extends Controller
             'recent_customers',
             'recent_installations',
             'monthly_fab',
+            'monthly_baa',
             'low_stock_materials',
+            'pending_fabs',
+            'pending_fab_count',
             'mapData'
         ));
     }

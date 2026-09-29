@@ -23,8 +23,20 @@
         background-color: #1e293b;
     }
     #map {
-        height: 400px;
+        height: min(400px, 65vh);
+        min-height: 280px;
         border-radius: 1rem;
+        position: relative;
+        z-index: 0 !important;
+        isolation: isolate;
+    }
+    .leaflet-container {
+        z-index: 0 !important;
+    }
+    @media (max-width: 640px) {
+        #map {
+            height: 320px;
+        }
     }
     .leaflet-popup-content-wrapper {
         border-radius: 0.75rem;
@@ -274,6 +286,76 @@
     </div>
 </div>
 
+{{-- FAB & BAA Monthly Chart Section --}}
+<div class="mt-4 rounded-xl border border-gray-100 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+    <div class="flex items-center justify-between border-b border-gray-100 px-4 py-2 dark:border-slate-700">
+        <div class="flex items-center gap-2">
+            <div class="flex -space-x-1">
+                <div class="rounded-full bg-purple-100 p-1.5 dark:bg-purple-900/50">
+                    <svg class="h-3 w-3 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                </div>
+                <div class="rounded-full bg-pink-100 p-1.5 dark:bg-pink-900/50">
+                    <svg class="h-3 w-3 text-pink-600 dark:text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-xs font-semibold text-gray-800 dark:text-white">Statistik FAB & BAA - 6 Bulan Terakhir</h3>
+        </div>
+        <div class="flex items-center gap-3 text-xs">
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-purple-500"></span> FAB</span>
+            <span class="flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-pink-500"></span> BAA</span>
+        </div>
+    </div>
+    <div class="p-3">
+        <canvas id="fabBaaChart" height="80"></canvas>
+    </div>
+</div>
+
+{{-- SLA FAB Pending --}}
+<div class="mt-6 rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+    <div class="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-slate-700">
+        <div>
+            <div class="flex items-center gap-2">
+                <div class="rounded-lg bg-amber-100 p-2 dark:bg-amber-900/30">
+                    <svg class="h-5 w-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <h3 class="font-display text-sm font-semibold text-gray-800 dark:text-white">SLA FAB Pending</h3>
+            </div>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Pelanggan berstatus OPEN yang menunggu proses instalasi</p>
+        </div>
+        <div class="flex items-center gap-2 text-xs">
+            <span class="rounded-full bg-blue-100 px-2.5 py-1 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">{{ $pending_fab_count }} Pending</span>
+            <a href="{{ route('jaringan.fab.index', ['status' => 'OPEN']) }}" class="font-medium text-purple-600 hover:underline dark:text-purple-400">Lihat semua</a>
+        </div>
+    </div>
+    <div class="divide-y divide-gray-50 dark:divide-slate-700">
+        @forelse($pending_fabs as $pendingFab)
+            @php
+                $pendingHours = $pendingFab->createdAt ? $pendingFab->createdAt->diffInHours(now()) : 0;
+                $slaClass = $pendingHours >= 24
+                    ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                    : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300';
+                $slaLabel = $pendingHours >= 24 ? 'Perhatian' : 'Sesuai SLA';
+            @endphp
+            <a href="{{ route('jaringan.fab.show', $pendingFab->id_fab) }}" class="flex flex-col gap-2 px-5 py-3 transition hover:bg-gray-50 sm:flex-row sm:items-center sm:justify-between dark:hover:bg-slate-700/50">
+                <div class="min-w-0">
+                    <p class="truncate text-sm font-semibold text-gray-800 dark:text-white">{{ $pendingFab->nama_pelanggan }}</p>
+                    <p class="truncate text-xs text-gray-500 dark:text-gray-400">{{ $pendingFab->kode_fab }} &middot; {{ $pendingFab->area->nama_area ?? '-' }} &middot; {{ $pendingFab->paket->nama_paket ?? '-' }}</p>
+                </div>
+                <div class="flex items-center gap-3 sm:flex-shrink-0">
+                    <span class="text-xs text-gray-400">{{ $pendingHours }} jam</span>
+                    <span class="rounded-full px-2.5 py-1 text-xs font-semibold {{ $slaClass }}">{{ $slaLabel }}</span>
+                </div>
+            </a>
+        @empty
+            <div class="px-5 py-8 text-center text-sm text-green-600 dark:text-green-400">Tidak ada FAB pending. Semua sudah diproses.</div>
+        @endforelse
+    </div>
+</div>
+
 {{-- Map Section --}}
 <div class="mt-6 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <div class="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -330,7 +412,94 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // FAB & BAA Monthly Chart
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const now = new Date();
+    const chartLabels = [], fabTotals = [], baaTotals = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        chartLabels.push(months[d.getMonth()] + ' ' + d.getFullYear());
+        fabTotals.push(0);
+        baaTotals.push(0);
+    }
+    @json($monthly_fab).forEach(item => {
+        const idx = chartLabels.findIndex(l => l.includes(item.year + ''));
+        if (idx !== -1) fabTotals[idx] = item.total;
+    });
+    @json($monthly_baa).forEach(item => {
+        const idx = chartLabels.findIndex(l => l.includes(item.year + ''));
+        if (idx !== -1) baaTotals[idx] = item.total;
+    });
+
+    new Chart(document.getElementById('fabBaaChart').getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: chartLabels,
+            datasets: [
+                {
+                    label: 'FAB',
+                    data: fabTotals,
+                    borderColor: '#9333ea',
+                    backgroundColor: 'rgba(147, 51, 234, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#9333ea',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                },
+                {
+                    label: 'BAA',
+                    data: baaTotals,
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#ec4899',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 1.5,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 8,
+                    titleFont: { size: 12, weight: 'bold' },
+                    bodyFont: { size: 11 },
+                    cornerRadius: 6
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, font: { size: 10 } },
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' }
+                },
+                x: {
+                    ticks: { font: { size: 10 } },
+                    grid: { display: false }
+                }
+            },
+            interaction: {
+                intersect: false,
+                mode: 'index'
+            }
+        }
+    });
+</script>
 <script>
     // Map data from controller
     const mapData = {

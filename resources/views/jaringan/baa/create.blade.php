@@ -13,8 +13,8 @@
 
 @section('content')
 <div class="mb-6">
-    <h1 class="font-display text-2xl font-bold text-gray-800 dark:text-white">Tambah BAA Instalasi</h1>
-    <p class="text-sm text-gray-500 dark:text-gray-400">Tambah data berita acara aktivas sekolah</p>
+    <h1 class="font-display text-2xl font-bold text-gray-800 dark:text-white">Tambah BAA Aktivasi</h1>
+    <p class="text-sm text-gray-500 dark:text-gray-400">Tambah data berita acara aktivasi</p>
 </div>
 
 @if(session('error'))
@@ -43,9 +43,9 @@
                 @error('id_fab')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
             </div>
             <div>
-                <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal Instalasi <span class="text-red-500">*</span></label>
-                <input type="date" name="tanggal_instalasi" value="{{ old('tanggal_instalasi', date('Y-m-d')) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>
-                @error('tanggal_instalasi')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+                <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Tanggal Instalasi</label>
+                <input type="text" value="{{ date('d M Y') }}" readonly class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-slate-500 focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" />
+                <input type="hidden" name="tanggal_instalasi" value="{{ old('tanggal_instalasi', date('Y-m-d')) }}" />
             </div>
             <div>
                 <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Status <span class="text-red-500">*</span></label>

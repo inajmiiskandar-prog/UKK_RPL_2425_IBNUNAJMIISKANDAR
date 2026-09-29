@@ -15,9 +15,11 @@ class PortPonController extends Controller
     {
         $query = PortPon::with(['olt.pop.area', 'odp']);
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nomor_port', 'like', '%' . $request->search . '%')
-                  ->orWhere('tipe_kartu', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nomor_port', 'like', "%{$search}%")
+                    ->orWhere('tipe_kartu', 'like', "%{$search}%");
+            });
         }
 
         if ($request->has('status') && $request->status) {

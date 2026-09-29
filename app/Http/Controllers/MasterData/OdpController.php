@@ -14,9 +14,11 @@ class OdpController extends Controller
     {
         $query = Odp::with(['olt.pop.area']);
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama_odp', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_odp', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama_odp', 'like', "%{$search}%")
+                    ->orWhere('kode_odp', 'like', "%{$search}%");
+            });
         }
 
         if ($request->has('olt') && $request->olt) {

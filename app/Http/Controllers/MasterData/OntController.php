@@ -15,9 +15,11 @@ class OntController extends Controller
     {
         $query = Ont::with(['pop.area', 'odp']);
 
-        if ($request->has('search') && $request->search) {
-            $query->where('serial_number', 'like', '%' . $request->search . '%')
-                  ->orWhere('pelanggan', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('serial_number', 'like', "%{$search}%")
+                    ->orWhere('pelanggan', 'like', "%{$search}%");
+            });
         }
 
         if ($request->has('status') && $request->status) {

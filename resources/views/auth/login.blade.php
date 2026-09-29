@@ -101,18 +101,29 @@
         right: 12px;
         top: 50%;
         transform: translateY(-50%);
-        background: none;
-        border: none;
+        z-index: 10;
+        width: 2rem;
+        height: 2rem;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        border-radius: 9999px;
+        background: rgba(255, 255, 255, 0.85);
         cursor: pointer;
-        color: #94a3b8;
-        padding: 4px;
+        color: #64748b;
+        padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: color 0.2s;
+        transition: all 0.2s ease;
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
     }
     .password-toggle:hover {
-        color: #64748b;
+        color: #334155;
+        border-color: rgba(148, 163, 184, 0.7);
+        background: rgba(248, 250, 252, 1);
+    }
+    .password-toggle svg {
+        width: 1.1rem;
+        height: 1.1rem;
     }
 </style>
 
@@ -183,7 +194,7 @@
                         </label>
                         <div class="relative">
                             <svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none absolute left-4 top-1/2 h-4.5 w-4.5 -translate-y-1/2 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M10 9a3.75 3.75 0 100-7.5A3.75 3.75 0 0010 9zm-7 8a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                <path d="M10 4a4 4 0 100 8 4 4 0 000-8zm0 9a9 9 0 00-9 9h18a9 9 0 00-9-9z"/>
                             </svg>
                             <input
                                 id="username"
@@ -197,6 +208,9 @@
                                 autocomplete="username"
                             >
                         </div>
+                        <p class="mt-2 text-xs text-slate-500">
+                            Login menggunakan username, bukan email.
+                        </p>
                     </div>
 
                     <div>
@@ -221,14 +235,14 @@
                                 onclick="togglePassword()"
                                 class="password-toggle"
                                 aria-label="Toggle password visibility"
+                                title="Lihat/Sembunyikan password"
                             >
-                                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                     <path d="M10 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>
                                     <path fill-rule="evenodd" d="M.664 10.59a1.651 1.651 0 010-1.186A10.004 10.004 0 0110 3c4.257 0 7.893 2.66 9.336 6.41.147.381.146.804 0 1.186A10.004 10.004 0 0110 17c-4.257 0-7.893-2.66-9.336-6.41zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
                                 </svg>
-                                <svg id="eye-off-icon" xmlns="http://www.w3.org/2000/svg" class="hidden h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9.77 2.23a.75.75 0 011.06 1.06L8.27 6.85l1.47 1.47a.75.75 0 01-1.06 1.06l-1.47-1.47-1.47 1.47a.75.75 0 11-1.06-1.06l1.47-1.47-1.47-1.47a.75.75 0 111.06-1.06l1.47 1.47 1.47-1.47a.75.75 0 011.06 1.06l-1.47 1.47 1.47 1.47a.75.75 0 11-1.06 1.06l-1.47-1.47-1.47 1.47z" clip-rule="evenodd"/>
-                                    <path fill-rule="evenodd" d="M14 10a6 6 0 01-5.23 5.96l-.7-.7A8.002 8.002 0 0110 17a8 8 0 008-5.4l-1.77 1.77A6 6 0 0114 10zm-4-3a4 4 0 100 8 4 4 0 000-8z" clip-rule="evenodd"/>
+                                <svg id="eye-off-icon" xmlns="http://www.w3.org/2000/svg" class="hidden h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M3.28 2.22a.75.75 0 111.06 1.06l-2.5 2.5a.75.75 0 01-1.06-1.06l2.5-2.5zm14.44 14.44a.75.75 0 011.06 1.06l-2.5 2.5a.75.75 0 11-1.06-1.06l2.5-2.5zM10 5a5 5 0 015 5c0 .65-.12 1.27-.35 1.84l1.68 1.68A6.98 6.98 0 0017 10a7.01 7.01 0 00-7-7c-1.44 0-2.8.43-3.95 1.17l1.64 1.64A5.04 5.04 0 0110 5zm0 10a5 5 0 01-5-5c0-.65.12-1.27.35-1.84L3.67 6.48A6.98 6.98 0 003 10a7.01 7.01 0 007 7c1.44 0 2.8-.43 3.95-1.17l-1.64-1.64A5.04 5.04 0 0110 15zm-2.5-2.5l-1.5-1.5a.75.75 0 011.06-1.06l1.5 1.5 1.5-1.5a.75.75 0 011.06 1.06l-1.5 1.5 1.5 1.5a.75.75 0 11-1.06 1.06l-1.5-1.5-1.5 1.5a.75.75 0 11-1.06-1.06z" clip-rule="evenodd"/>
                                 </svg>
                             </button>
                         </div>

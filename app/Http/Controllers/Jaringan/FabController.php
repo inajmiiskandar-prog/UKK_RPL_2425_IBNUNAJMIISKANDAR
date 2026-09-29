@@ -16,11 +16,19 @@ class FabController extends Controller
     {
         $query = Fab::with(['area', 'paket', 'sales']);
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama_pelanggan', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_fab', 'like', '%' . $request->search . '%')
-                  ->orWhere('nik', 'like', '%' . $request->search . '%')
-                  ->orWhere('no_hp', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama_pelanggan', 'like', "%{$search}%")
+                    ->orWhere('kode_fab', 'like', "%{$search}%")
+                    ->orWhere('nik', 'like', "%{$search}%")
+                    ->orWhere('no_hp', 'like', "%{$search}%")
+                    ->orWhereHas('area', function ($areaQuery) use ($search) {
+                        $areaQuery->where('nama_area', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('paket', function ($paketQuery) use ($search) {
+                        $paketQuery->where('nama_paket', 'like', "%{$search}%");
+                    });
+            });
         }
 
         if ($request->has('status') && $request->status) {
@@ -61,6 +69,7 @@ class FabController extends Controller
             'alamat' => 'required|string|max:255',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'status' => 'required|in:OPEN,AKTIF',
             'id_area' => 'required|exists:area,id_area',
             'id_paket' => 'required|exists:paket,id_paket',
@@ -84,6 +93,12 @@ class FabController extends Controller
             $lastNumber = $lastFab ? (int) substr($lastFab->kode_fab, 3) : 0;
             $kodeFab = 'FAB' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
 
+            // Handle foto upload
+            $fotoPath = null;
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('fab-photos', 'public');
+            }
+
             Fab::create([
                 'kode_fab' => $kodeFab,
                 'nama_pelanggan' => $request->nama_pelanggan,
@@ -92,6 +107,7 @@ class FabController extends Controller
                 'alamat' => $request->alamat,
                 'latitude' => $request->latitude ?: 0,
                 'longitude' => $request->longitude ?: 0,
+                'foto' => $fotoPath,
                 'status' => $request->status,
                 'id_area' => $request->id_area,
                 'id_paket' => $request->id_paket,
@@ -111,7 +127,7 @@ class FabController extends Controller
 
     public function show(Fab $fab)
     {
-        $fab->load(['area', 'paket', 'sales', 'penginput', 'baas.teknisi']);
+        $fab->load(['area', 'paket', 'sales', 'penginput', 'baa.teknisi']);
         return view('jaringan.fab.show', compact('fab'));
     }
 
@@ -133,6 +149,7 @@ class FabController extends Controller
             'alamat' => 'required|string|max:255',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'status' => 'required|in:OPEN,AKTIF',
             'id_area' => 'required|exists:area,id_area',
             'id_paket' => 'required|exists:paket,id_paket',
@@ -142,6 +159,16 @@ class FabController extends Controller
         try {
             DB::beginTransaction();
 
+            // Handle foto upload
+            $fotoPath = $fab->foto;
+            if ($request->hasFile('foto')) {
+                // Delete old foto if exists
+                if ($fab->foto && \Storage::disk('public')->exists($fab->foto)) {
+                    \Storage::disk('public')->delete($fab->foto);
+                }
+                $fotoPath = $request->file('foto')->store('fab-photos', 'public');
+            }
+
             $fab->update([
                 'nama_pelanggan' => $request->nama_pelanggan,
                 'nik' => $request->nik,
@@ -149,6 +176,7 @@ class FabController extends Controller
                 'alamat' => $request->alamat,
                 'latitude' => $request->latitude ?: 0,
                 'longitude' => $request->longitude ?: 0,
+                'foto' => $fotoPath,
                 'status' => $request->status,
                 'id_area' => $request->id_area,
                 'id_paket' => $request->id_paket,
@@ -167,10 +195,12 @@ class FabController extends Controller
 
     public function destroy(Fab $fab)
     {
+        abort_unless(auth()->user()?->role === 'ADMIN', 403);
+
         try {
             DB::beginTransaction();
 
-            if ($fab->baas()->count() > 0) {
+            if ($fab->baa()->count() > 0) {
                 return redirect()->back()->with('error', 'Pelanggan tidak dapat dihapus karena sudah memiliki data instalasi!');
             }
 

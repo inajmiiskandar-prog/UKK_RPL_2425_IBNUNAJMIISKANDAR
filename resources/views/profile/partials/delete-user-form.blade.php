@@ -1,12 +1,17 @@
-<section class="space-y-6">
-    <header>
-        <h2 class="text-lg font-medium text-gray-900">
-            {{ __('Delete Account') }}
+<section class="space-y-5">
+    <header class="flex items-start gap-3">
+        <div class="rounded-xl bg-red-100 p-2.5 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h12"/></svg>
+        </div>
+        <div>
+        <h2 class="font-display text-lg font-semibold text-red-800 dark:text-red-300">
+            Zona Bahaya
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600">
-            {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
+        <p class="mt-1 text-sm text-red-700/80 dark:text-red-300/70">
+            Menghapus akun bersifat permanen dan seluruh data akun akan dihapus.
         </p>
+        </div>
     </header>
 
     <x-danger-button

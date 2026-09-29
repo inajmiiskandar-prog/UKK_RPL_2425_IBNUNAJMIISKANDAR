@@ -15,6 +15,13 @@
 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <h2 class="mb-6 font-display text-lg font-semibold text-gray-800 dark:text-white">Form Edit Port PON</h2>
 
+    @if(session('error'))
+    <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
+        <p class="text-sm font-medium text-red-800 dark:text-red-200">Terjadi kesalahan:</p>
+        <p class="mt-1 text-sm text-red-600 dark:text-red-300">{{ session('error') }}</p>
+    </div>
+    @endif
+
     @if($errors->any())
     <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
         <p class="text-sm font-medium text-red-800 dark:text-red-200">Terjadi kesalahan:</p>

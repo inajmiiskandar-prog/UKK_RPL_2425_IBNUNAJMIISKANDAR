@@ -13,24 +13,42 @@ class UserController extends Controller
     {
         $query = User::query();
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama', 'like', '%' . $request->search . '%')
-                  ->orWhere('username', 'like', '%' . $request->search . '%')
-                  ->orWhere('email', 'like', '%' . $request->search . '%');
+        // Filter search
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            });
         }
 
+        // Filter role
         if ($request->has('role') && $request->role) {
             $query->where('role', $request->role);
         }
 
+        // Filter status
         if ($request->has('status') && $request->status !== '') {
             $query->where('status', $request->status);
         }
 
+        // Filter divisi - ambil dari query parameter
+        if ($request->has('divisi') && $request->divisi) {
+            $query->where('divisi', $request->divisi);
+        }
+
+        // Ambil daftar divisi unik untuk dropdown filter
+        $divisiList = User::whereNotNull('divisi')
+                         ->where('divisi', '!=', '')
+                         ->distinct()
+                         ->orderBy('divisi')
+                         ->pluck('divisi')
+                         ->toBase(); // Convert to Collection for consistency
+
         $users = $query->orderBy('nama')->paginate(10);
         $users->appends($request->all());
 
-        return view('users.index', compact('users'));
+        return view('users.index', compact('users', 'divisiList'));
     }
 
     public function create()
@@ -44,6 +62,7 @@ class UserController extends Controller
             'nama' => 'required|string|max:100',
             'username' => 'required|string|max:50|unique:users,username',
             'password' => 'required|string|min:6|confirmed',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'jkl' => 'required|in:LAKI_LAKI,PEREMPUAN',
             'role' => 'required|in:ADMIN,LEADER,SALES,TEKNISI,LOGISTIK',
             'no_hp' => 'nullable|string|max:20',
@@ -68,6 +87,11 @@ class UserController extends Controller
             $lastNumber = $lastUser ? (int) substr($lastUser->kode_user, 3) : 0;
             $kodeUser = 'USR' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
 
+            $fotoPath = null;
+            if ($request->hasFile('foto')) {
+                $fotoPath = $request->file('foto')->store('user-photos', 'public');
+            }
+
             User::create([
                 'kode_user' => $kodeUser,
                 'nama' => $request->nama,
@@ -75,6 +99,7 @@ class UserController extends Controller
                 'password' => Hash::make($request->password),
                 'jkl' => $request->jkl,
                 'role' => $request->role,
+                'foto' => $fotoPath,
                 'no_hp' => $request->no_hp,
                 'email' => $request->email,
                 'status' => $request->status,
@@ -107,6 +132,7 @@ class UserController extends Controller
             'nama' => 'required|string|max:100',
             'username' => 'required|string|max:50|unique:users,username,' . $user->id_user . ',id_user',
             'password' => 'nullable|string|min:6|confirmed',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
             'jkl' => 'required|in:LAKI_LAKI,PEREMPUAN',
             'role' => 'required|in:ADMIN,LEADER,SALES,TEKNISI,LOGISTIK',
             'no_hp' => 'nullable|string|max:20',
@@ -129,6 +155,14 @@ class UserController extends Controller
 
             if ($request->password) {
                 $data['password'] = Hash::make($request->password);
+            }
+
+            if ($request->hasFile('foto')) {
+                // delete old foto if exists
+                if ($user->foto && \Storage::disk('public')->exists($user->foto)) {
+                    \Storage::disk('public')->delete($user->foto);
+                }
+                $data['foto'] = $request->file('foto')->store('user-photos', 'public');
             }
 
             $user->update($data);

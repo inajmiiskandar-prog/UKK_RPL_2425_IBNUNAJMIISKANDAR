@@ -6,9 +6,9 @@
 
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
 <div class="mb-6">
     <a href="{{ route('masterdata.odp.index') }}" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400">
@@ -32,11 +32,11 @@
         <div class="grid gap-5 md:grid-cols-2">
             <div>
                 <label for="nama_odp" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Nama ODP <span class="text-red-500">*</span></label>
-                <input type="text" id="nama_odp" name="nama_odp" value="{{ old('nama_odp') }}" placeholder="Masukkan nama ODP" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>
+                <input type="text" id="nama_odp" name="nama_odp" value="{{ old('nama_odp') }}" placeholder="Masukkan nama ODP" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>
             </div>
             <div>
                 <label for="id_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">OLT <span class="text-red-500">*</span></label>
-                <select id="id_olt" name="id_olt" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required onchange="updateCoordsFromOlt()">
+                <select id="id_olt" name="id_olt" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" required onchange="updateCoordsFromOlt()">
                     <option value="">Pilih OLT</option>
                     @foreach($olts as $olt)
                     <option value="{{ $olt->id_olt }}" data-lat="{{ $olt->latitude }}" data-lng="{{ $olt->longitude }}" {{ old('id_olt') == $olt->id_olt ? 'selected' : '' }}>{{ $olt->kode_olt }} - {{ $olt->nama_olt }}</option>
@@ -46,33 +46,36 @@
         </div>
         <div>
             <label for="alamat" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Alamat <span class="text-red-500">*</span></label>
-            <textarea id="alamat" name="alamat" rows="2" placeholder="Masukkan alamat ODP" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>{{ old('alamat') }}</textarea>
+            <textarea id="alamat" name="alamat" rows="2" placeholder="Masukkan alamat ODP" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>{{ old('alamat') }}</textarea>
         </div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>
                 <label for="jumlah_port" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Jumlah Port</label>
-                <input type="number" id="jumlah_port" name="jumlah_port" value="{{ old('jumlah_port', 8) }}" min="1" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                <input type="number" id="jumlah_port" name="jumlah_port" value="{{ old('jumlah_port', 8) }}" min="1" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white">
             </div>
             <div></div>
         </div>
 
-        {{-- Peta Interaktif --}}
         <div>
-            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">
-                Lokasi (Klik atau geser marker pada peta, atau cari lokasi)
-            </label>
-            <div id="map" class="mb-3 h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
-            <div class="grid gap-5 md:grid-cols-2">
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi</label>
+            <div id="map" class="h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
+            <div class="flex items-center gap-2 mt-2">
+                <button type="button" id="btn-gps" class="flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    GPS Saya
+                </button>
+                <span class="text-xs text-gray-500">Klik peta atau cari alamat untuk memilih lokasi</span>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2 mt-3">
                 <div>
                     <label for="latitude" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Latitude</label>
-                    <input type="text" id="latitude" name="latitude" value="{{ old('latitude') }}" placeholder="-6.208763" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
+                    <input type="text" id="latitude" name="latitude" value="{{ old('latitude') }}" placeholder="-6.208763" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
                 </div>
                 <div>
                     <label for="longitude" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Longitude</label>
-                    <input type="text" id="longitude" name="longitude" value="{{ old('longitude') }}" placeholder="106.845599" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
+                    <input type="text" id="longitude" name="longitude" value="{{ old('longitude') }}" placeholder="106.845599" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
                 </div>
             </div>
-            <p class="mt-2 text-xs text-gray-500">💡 Pilih OLT untuk auto-fill koordinat, atau klik/geser marker untuk adjust</p>
         </div>
 
         <div class="flex items-center gap-3 pt-4">
@@ -86,19 +89,20 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var lat = {{ old('latitude') ? old('latitude') : '-2.5' }};
-    var lng = {{ old('longitude') ? old('longitude') : '118.0' }};
+var map, marker;
 
-    var map = L.map('map').setView([lat, lng], 5);
+document.addEventListener('DOMContentLoaded', function() {
+    var lat = {{ old('latitude') ? old('latitude') : '-6.2' }};
+    var lng = {{ old('longitude') ? old('longitude') : '106.8' }};
+
+    map = L.map('map').setView([lat, lng], 15);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    var marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-    // Add search control
     L.Control.geocoder({
         defaultMarkGeocode: true
     }).on('markgeocode', function(e) {
@@ -116,13 +120,28 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     marker.on('dragend', updateInputs);
-
     map.on('click', function(e) {
         marker.setLatLng(e.latlng);
         updateInputs();
     });
 
-    if (lat && lng && lat != -2.5) {
+    document.getElementById('btn-gps').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var pos = [position.coords.latitude, position.coords.longitude];
+                marker.setLatLng(pos);
+                map.setView(pos, 16);
+                document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+            }, function() {
+                alert('Tidak bisa mendapatkan lokasi GPS');
+            });
+        } else {
+            alert('Browser tidak mendukung GPS');
+        }
+    });
+
+    if (lat && lng) {
         map.setView([lat, lng], 15);
         updateInputs();
     }
@@ -137,17 +156,8 @@ function updateCoordsFromOlt() {
     if (lat && lng) {
         document.getElementById('latitude').value = lat;
         document.getElementById('longitude').value = lng;
-
-        var map = L.map('map');
+        marker.setLatLng([lat, lng]);
         map.setView([lat, lng], 16);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
-
-        L.marker([lat, lng], { draggable: true }).addTo(map);
     }
 }
 </script>

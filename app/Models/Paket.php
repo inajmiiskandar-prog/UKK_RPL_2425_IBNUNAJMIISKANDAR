@@ -23,4 +23,9 @@ class Paket extends Model
     {
         return $this->hasMany(Fab::class, 'id_paket', 'id_paket');
     }
+
+    public function fabs()
+    {
+        return $this->hasMany(Fab::class, 'id_paket', 'id_paket');
+    }
 }

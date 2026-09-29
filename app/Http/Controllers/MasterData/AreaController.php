@@ -16,9 +16,11 @@ class AreaController extends Controller
     {
         $query = Area::query();
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama_area', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_area', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama_area', 'like', "%{$search}%")
+                    ->orWhere('kode_area', 'like', "%{$search}%");
+            });
         }
 
         $areas = $query->orderBy('kode_area')->paginate(10);

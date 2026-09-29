@@ -9,6 +9,11 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
 <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+<style>
+    .leaflet-routing-container {
+        display: none !important;
+    }
+</style>
 
 <div class="mb-6 flex items-center justify-between">
     <a href="{{ route('masterdata.olt.index') }}" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400">
@@ -39,10 +44,10 @@
         <div class="mb-4">
             <label class="mb-2 block text-xs font-medium text-gray-500">Foto OLT</label>
             <div class="relative overflow-hidden rounded-xl border border-gray-200 dark:border-slate-600">
-                <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto {{ $olt->nama_olt }}" class="h-48 w-full object-cover cursor-pointer" onclick="openFullscreen(this)">
-                <a href="{{ asset('storage/' . $olt->foto_olt) }}" target="_blank" class="absolute right-2 top-2 rounded-lg bg-black/50 p-2 text-white hover:bg-black/70">
+                <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto {{ $olt->nama_olt }}" class="h-48 w-full cursor-pointer object-cover transition hover:scale-[1.02]" onclick="openFullscreen(this)">
+                <button type="button" onclick="openFullscreen(this.dataset.src)" data-src="{{ asset('storage/' . $olt->foto_olt) }}" class="absolute right-2 top-2 rounded-lg bg-black/50 p-2 text-white hover:bg-black/70" aria-label="Lihat foto OLT">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                </a>
+                </button>
             </div>
         </div>
         @else
@@ -113,35 +118,43 @@
         </div>
 
         {{-- Peta --}}
-        <div id="map" class="h-[500px] w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
+        <div id="map" class="h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
     </div>
 </div>
 
 {{-- Fullscreen Modal --}}
-<div id="fullscreenModal" class="fixed inset-0 z-50 hidden bg-black/90" onclick="closeFullscreen()">
-    <button class="absolute right-4 top-4 rounded-lg bg-white/20 p-2 text-white hover:bg-white/30">
+<div id="fullscreenModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/90 p-4" onclick="closeFullscreen()">
+    <button type="button" class="absolute right-4 top-4 rounded-lg bg-white/20 p-2 text-white hover:bg-white/30" aria-label="Tutup foto">
         <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
-    <img id="fullscreenImage" src="" alt="Fullscreen" class="mx-auto max-h-full max-w-full object-contain">
+    <img id="fullscreenImage" src="" alt="Foto OLT" class="max-h-[90vh] max-w-full rounded-2xl object-contain shadow-2xl" onclick="event.stopPropagation()">
 </div>
 @endsection
 
 @push('scripts')
 <script>
-function openFullscreen(img) {
-    document.getElementById('fullscreenImage').src = img.src;
+function openFullscreen(source) {
+    document.getElementById('fullscreenImage').src = typeof source === 'string' ? source : source.src;
     document.getElementById('fullscreenModal').classList.remove('hidden');
+    document.getElementById('fullscreenModal').classList.add('flex');
+    document.body.classList.add('overflow-hidden');
 }
 
 function closeFullscreen() {
     document.getElementById('fullscreenModal').classList.add('hidden');
+    document.getElementById('fullscreenModal').classList.remove('flex');
+    document.body.classList.remove('overflow-hidden');
 }
 
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') closeFullscreen();
+});
+
 document.addEventListener('DOMContentLoaded', function() {
-    var oltLat = {{ $olt->latitude ?? 'null' }};
-    var oltLng = {{ $olt->longitude ?? 'null' }};
-    var popLat = {{ $olt->pop && $olt->pop->latitude ? $olt->pop->latitude : 'null' }};
-    var popLng = {{ $olt->pop && $olt->pop->longitude ? $olt->pop->longitude : 'null' }};
+    var oltLat = @json($olt->latitude);
+    var oltLng = @json($olt->longitude);
+    var popLat = @json($olt->pop->latitude ?? null);
+    var popLng = @json($olt->pop->longitude ?? null);
 
     var map = L.map('map');
 
@@ -182,20 +195,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Calculate route if both coordinates exist
     if (oltLat && oltLng && popLat && popLng) {
-        L.Routing.control({
-            waypoints: [
-                L.latLng(popLat, popLng),
-                L.latLng(oltLat, oltLng)
-            ],
-            router: L.Routing.osrmv1({
-                serviceUrl: 'https://router.project-osrm.org/route/v1'
-            }),
-            lineOptions: {
-                styles: [{ color: '#f97316', weight: 5, opacity: 0.7 }]
-            },
-            createMarker: function() { return null; },
-            show: false
-        }).addTo(map);
+        if (window.L && L.Routing && typeof L.Routing.control === 'function') {
+            L.Routing.control({
+                waypoints: [
+                    L.latLng(popLat, popLng),
+                    L.latLng(oltLat, oltLng)
+                ],
+                router: L.Routing.osrmv1({
+                    serviceUrl: 'https://router.project-osrm.org/route/v1'
+                }),
+                lineOptions: {
+                    styles: [{ color: '#f97316', weight: 5, opacity: 0.7 }]
+                },
+                createMarker: function() { return null; },
+                show: false,
+                addWaypoints: false
+            }).addTo(map);
+        } else {
+            L.polyline([[popLat, popLng], [oltLat, oltLng]], {
+                color: '#f97316',
+                weight: 5,
+                opacity: 0.7,
+                dashArray: '8 8'
+            }).addTo(map);
+        }
 
         map.fitBounds([
             [oltLat, oltLng],

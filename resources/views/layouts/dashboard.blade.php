@@ -24,12 +24,14 @@
         $secondaryColor = App\Models\Setting::get('secondary_color', '#a855f7');
 
         // Generate color variations
-        function hexToRgb($hex) {
-            $hex = str_replace('#', '', $hex);
-            if(strlen($hex) == 3) {
-                $hex = str_repeat($hex, 2);
+        if (!function_exists('hexToRgb')) {
+            function hexToRgb($hex) {
+                $hex = str_replace('#', '', $hex);
+                if (strlen($hex) == 3) {
+                    $hex = str_repeat($hex, 2);
+                }
+                return hexdec($hex);
             }
-            return hexdec($hex);
         }
 
         $primaryRgb = [];
@@ -135,16 +137,16 @@
 
     @stack('styles')
 </head>
-<body class="font-body bg-gray-50 dark:bg-slate-900">
+<body class="font-body overflow-x-hidden bg-gray-50 dark:bg-slate-900">
     <!-- Overlay for mobile sidebar -->
-    <div id="sidebarOverlay" class="fixed inset-0 z-40 bg-black/50 hidden lg:hidden" onclick="toggleSidebar()"></div>
+    <div id="sidebarOverlay" class="fixed inset-0 z-[9990] hidden bg-black/50 lg:hidden" onclick="toggleSidebar()"></div>
 
     <div class="min-h-screen flex">
 
         {{-- ========================================== --}}
         {{-- SIDEBAR - STICKY ON DESKTOP                        --}}
         {{-- ========================================== --}}
-        <aside id="sidebar" class="sticky top-0 h-screen w-64 flex-shrink-0 bg-white dark:bg-slate-800 shadow-xl sidebar-transition -translate-x-full lg:translate-x-0 flex flex-col">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-[9991] flex h-screen w-64 flex-shrink-0 -translate-x-full flex-col bg-white shadow-xl sidebar-transition dark:bg-slate-800 lg:sticky lg:top-0 lg:z-auto lg:translate-x-0">
 
             {{-- Logo & Brand (Fixed at top) --}}
             <div class="flex h-16 flex-shrink-0 items-center justify-between border-b border-gray-100 dark:border-slate-700 px-6">
@@ -286,6 +288,72 @@
                         <span>Material</span>
                     </a>
 
+                </div>
+
+                {{-- ========================================== --}}
+                {{-- KPI SECTION - SATU GRUP                     --}}
+                {{-- ========================================== --}}
+                <div class="mt-6 mb-2 px-4">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">KPI</p>
+                </div>
+
+                <div class="space-y-1">
+                    {{-- Master Data KPI --}}
+                    <a href="{{ route('kpi.employee.index') }}"
+                       class="menu-item {{ request()->routeIs('kpi.employee.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span>Data Karyawan</span>
+                    </a>
+
+                    <a href="{{ route('kpi.soft-skill.index') }}"
+                       class="menu-item {{ request()->routeIs('kpi.soft-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                        <span>Soft Skill</span>
+                    </a>
+
+                    <a href="{{ route('kpi.hard-skill.index') }}"
+                       class="menu-item {{ request()->routeIs('kpi.hard-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        <span>Hard Skill</span>
+                    </a>
+
+                    <a href="{{ route('kpi.assessment.index') }}"
+                       class="menu-item {{ request()->routeIs('kpi.assessment.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                        </svg>
+                        <span>Penilaian KPI</span>
+                    </a>
+
+                    <a href="{{ route('kpi.assessment.history') }}"
+                       class="menu-item {{ request()->routeIs('kpi.assessment.history') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        <span>Histori KPI</span>
+                    </a>
+
+                    <a href="{{ route('kpi.report.index') }}"
+                       class="menu-item {{ request()->routeIs('kpi.report.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        <span>Export Data</span>
+                    </a>
+                </div>
+
+                {{-- Pengaturan Section (Paling Bawah) --}}
+                <div class="mt-6 mb-2 px-4">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Pengaturan</p>
+                </div>
+
+                <div class="space-y-1 mb-6">
                     <a href="{{ route('settings.index') }}"
                        class="menu-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,7 +369,7 @@
         {{-- ========================================== --}}
         {{-- MAIN CONTENT                             --}}
         {{-- ========================================== --}}
-        <div class="flex flex-1 flex-col">
+        <div class="flex min-w-0 flex-1 flex-col">
 
             {{-- Top Navbar --}}
             <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-gray-100 bg-white/80 px-4 backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/80 sm:px-6">
@@ -319,7 +387,10 @@
                 </div>
 
                 {{-- Right: Actions --}}
-                <div class="flex items-center gap-2 sm:gap-4">
+                <div class="flex items-center gap-3 sm:gap-4">
+                    <div class="hidden items-center rounded-full bg-slate-100 px-3 py-2 text-sm font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-200 sm:flex">
+                        <span id="dashboardDateTime"></span>
+                    </div>
 
                     {{-- Dark Mode Toggle --}}
                     <button onclick="toggleDarkMode()" class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-700" title="Toggle Dark Mode">
@@ -332,19 +403,76 @@
                     </button>
 
                     {{-- Notifications --}}
-                    <button class="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-700">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                        <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500"></span>
-                    </button>
+                    @php
+                        $notificationReadAt = session('notifications_read_at');
+                        $notifications = App\Models\ActivityLog::with('user')
+                            ->latest('createdAt')
+                            ->limit(5)
+                            ->get();
+                        $unreadNotifications = $notificationReadAt
+                            ? App\Models\ActivityLog::where('createdAt', '>', $notificationReadAt)->count()
+                            : App\Models\ActivityLog::count();
+                    @endphp
+                    <div class="relative">
+                        <button type="button" onclick="toggleNotificationMenu()" aria-label="Buka notifikasi" aria-expanded="false" class="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-700">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            @if($unreadNotifications > 0)
+                                <span id="notificationBadge" class="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-red-500 px-1 text-center text-[10px] font-bold leading-4 text-white">{{ $unreadNotifications > 99 ? '99+' : $unreadNotifications }}</span>
+                            @endif
+                        </button>
+
+                        <div id="notificationDropdown" class="absolute right-0 top-full z-50 mt-2 hidden w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl dark:border-slate-700 dark:bg-slate-800 sm:w-96">
+                            <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-slate-700">
+                                <h3 class="text-sm font-semibold text-gray-800 dark:text-white">Notifikasi</h3>
+                                @if($unreadNotifications > 0)
+                                    <form method="POST" action="{{ route('notifications.read') }}" onsubmit="markNotificationsRead(event)">
+                                        @csrf
+                                        <button type="submit" class="text-xs font-medium text-primary hover:underline">Tandai sudah dibaca</button>
+                                    </form>
+                                @endif
+                            </div>
+                            <div class="max-h-80 overflow-y-auto">
+                                @forelse($notifications as $notification)
+                                    @php
+                                        $notificationUrl = match (true) {
+                                            str_starts_with($notification->type, 'USER_') => route('users.index'),
+                                            str_starts_with($notification->type, 'FAB_') => route('jaringan.fab.index'),
+                                            str_starts_with($notification->type, 'BAA_') => route('jaringan.baa.index'),
+                                            str_starts_with($notification->type, 'AREA_') => route('masterdata.area.index'),
+                                            str_starts_with($notification->type, 'POP_') => route('masterdata.pop.index'),
+                                            str_starts_with($notification->type, 'OLT_') => route('masterdata.olt.index'),
+                                            str_starts_with($notification->type, 'ODP_') => route('masterdata.odp.index'),
+                                            str_starts_with($notification->type, 'ONT_') => route('masterdata.ont.index'),
+                                            str_starts_with($notification->type, 'PORTPON_') => route('masterdata.port-pon.index'),
+                                            str_starts_with($notification->type, 'PAKET_') => route('masterdata.paket.index'),
+                                            str_starts_with($notification->type, 'MATERIAL_') => route('masterdata.material.index'),
+                                            $notification->type === 'SETTINGS_UPDATED' => route('settings.index'),
+                                            default => route('dashboard'),
+                                        };
+                                    @endphp
+                                    <a href="{{ $notificationUrl }}" class="block border-b border-gray-100 px-4 py-3 last:border-0 hover:bg-gray-50 dark:border-slate-700 dark:hover:bg-slate-700/50">
+                                        <p class="text-sm text-gray-700 dark:text-gray-200">{{ $notification->description }}</p>
+                                        <p class="mt-1 text-xs text-gray-400">{{ $notification->user->nama ?? 'Sistem' }} &middot; {{ $notification->createdAt?->diffForHumans() }}</p>
+                                    </a>
+                                @empty
+                                    <p class="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">Belum ada notifikasi.</p>
+                                @endforelse
+                            </div>
+                        </div>
+                    </div>
 
                     {{-- User Dropdown --}}
                     <div class="relative">
                         <button onclick="toggleUserMenu()" class="flex items-center gap-2 rounded-lg p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700">
-                            <div class="h-8 w-8 rounded-full bg-gradient-to-br {{ 'from-primary-500' }} to-pink-500 flex items-center justify-center text-white font-semibold text-sm" style="background: linear-gradient(to bottom right, {{ $primaryColor }}, {{ $secondaryColor }});">
-                                {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
-                            </div>
+                            @if(Auth::user()->foto)
+                                <img src="{{ Storage::url(Auth::user()->foto) }}" alt="Avatar {{ Auth::user()->nama ?? 'User' }}" class="h-8 w-8 rounded-full object-cover">
+                            @else
+                                <div class="h-8 w-8 rounded-full bg-gradient-to-br {{ 'from-primary-500' }} to-pink-500 flex items-center justify-center text-white font-semibold text-sm" style="background: linear-gradient(to bottom right, {{ $primaryColor }}, {{ $secondaryColor }});">
+                                    {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
+                                </div>
+                            @endif
                             <div class="hidden sm:block">
                                 <p class="text-sm font-medium text-gray-700 dark:text-gray-200">{{ Auth::user()->nama ?? 'User' }}</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ Auth::user()->role ?? 'User' }}</p>
@@ -412,6 +540,31 @@
             dropdown.classList.toggle('hidden');
         }
 
+        // Notification Dropdown Toggle
+        function toggleNotificationMenu() {
+            const dropdown = document.getElementById('notificationDropdown');
+            const button = document.querySelector('[aria-label="Buka notifikasi"]');
+            const isHidden = dropdown.classList.toggle('hidden');
+            button.setAttribute('aria-expanded', String(!isHidden));
+        }
+
+        function markNotificationsRead(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': window.csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            }).then(response => {
+                if (response.ok) {
+                    document.getElementById('notificationBadge')?.remove();
+                    form.remove();
+                }
+            });
+        }
+
         // Dark Mode Toggle
         function toggleDarkMode() {
             const html = document.documentElement;
@@ -424,11 +577,25 @@
             document.documentElement.classList.add('dark');
         }
 
+        function updateDashboardDateTime() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('dashboardDateTime').textContent = now.toLocaleDateString('id-ID', dateOptions);
+        }
+
+        updateDashboardDateTime();
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', function(e) {
             const userDropdown = document.getElementById('userDropdown');
             if (!e.target.closest('[onclick="toggleUserMenu()"]') && !userDropdown.contains(e.target)) {
                 userDropdown.classList.add('hidden');
+            }
+
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            if (!e.target.closest('[aria-label="Buka notifikasi"]') && !notificationDropdown.contains(e.target)) {
+                notificationDropdown.classList.add('hidden');
+                document.querySelector('[aria-label="Buka notifikasi"]')?.setAttribute('aria-expanded', 'false');
             }
         });
 

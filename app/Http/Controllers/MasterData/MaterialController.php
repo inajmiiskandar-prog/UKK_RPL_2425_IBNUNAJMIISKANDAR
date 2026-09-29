@@ -13,9 +13,11 @@ class MaterialController extends Controller
     {
         $query = Material::query();
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama_material', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_material', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama_material', 'like', "%{$search}%")
+                    ->orWhere('kode_material', 'like', "%{$search}%");
+            });
         }
 
         if ($request->has('kondisi') && $request->kondisi) {
@@ -143,6 +145,27 @@ class MaterialController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal menghapus Material: ' . $e->getMessage());
+        }
+    }
+
+    public function addStock(Request $request, Material $material)
+    {
+        $request->validate([
+            'jumlah_tambah' => 'required|integer|min:1',
+        ], [
+            'jumlah_tambah.required' => 'Jumlah wajib diisi!',
+            'jumlah_tambah.min' => 'Jumlah minimal 1!',
+        ]);
+
+        try {
+            $jumlahLama = $material->stok;
+            $material->increment('stok', $request->jumlah_tambah);
+
+            \App\Models\ActivityLog::log('MATERIAL_STOCK_ADDED', "Menambah Stok {$material->nama_material}: {$jumlahLama} -> {$material->fresh()->stok}", auth()->id());
+
+            return redirect()->back()->with('success', "Stok {$material->nama_material} berhasil ditambahkan dari {$jumlahLama} menjadi {$material->fresh()->stok}!");
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal menambahkan stok: ' . $e->getMessage());
         }
     }
 }

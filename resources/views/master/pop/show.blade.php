@@ -19,53 +19,96 @@
     </a>
 </div>
 
-<div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-    <div class="mb-4 flex items-center gap-3">
-        <div class="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
-            <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+<div class="grid gap-6 lg:grid-cols-3">
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-5 flex items-center gap-3">
+            <div class="rounded-full bg-blue-100 p-2 dark:bg-blue-900/30">
+                <svg class="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <div>
+                <h2 class="font-display text-lg font-bold text-gray-800 dark:text-white">{{ $pop->nama_pop }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $pop->kode_pop }} • {{ $pop->area->nama_area ?? '-' }}</p>
+            </div>
         </div>
-        <div>
-            <h2 class="font-display text-lg font-bold text-gray-800 dark:text-white">{{ $pop->nama_pop }}</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $pop->kode_pop }} • {{ $pop->area->nama_area ?? '-' }}</p>
+
+        <div class="space-y-4 text-sm">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Alamat</p>
+                <p class="mt-1 font-medium text-gray-800 dark:text-white">{{ $pop->alamat ?: '-' }}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Latitude</p>
+                    <p class="mt-1 break-all font-medium text-gray-800 dark:text-white">{{ $pop->latitude ?: '-' }}</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Longitude</p>
+                    <p class="mt-1 break-all font-medium text-gray-800 dark:text-white">{{ $pop->longitude ?: '-' }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 border-t border-gray-100 pt-4 dark:border-slate-700">
+                <div class="rounded-xl bg-blue-50 p-3 dark:bg-blue-900/20">
+                    <p class="text-xs text-blue-600 dark:text-blue-400">Jumlah OLT</p>
+                    <p class="mt-1 text-xl font-bold text-blue-700 dark:text-blue-300">{{ $pop->olts->count() }}</p>
+                </div>
+                <div class="rounded-xl bg-purple-50 p-3 dark:bg-purple-900/20">
+                    <p class="text-xs text-purple-600 dark:text-purple-400">Jumlah ONT</p>
+                    <p class="mt-1 text-xl font-bold text-purple-700 dark:text-purple-300">{{ $pop->onts->count() }}</p>
+                </div>
+            </div>
         </div>
+
+        @if($pop->olts->count())
+            <div class="mt-6 border-t border-gray-100 pt-4 dark:border-slate-700">
+                <h3 class="text-sm font-semibold text-gray-800 dark:text-white">OLT Terhubung</h3>
+                <div class="mt-3 space-y-2">
+                    @foreach($pop->olts as $olt)
+                        <div class="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 dark:bg-slate-700/50">
+                            <span class="text-sm text-gray-700 dark:text-gray-200">{{ $olt->nama_olt }}</span>
+                            <span class="text-xs text-gray-400">{{ $olt->kode_olt }}</span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
     </div>
 
-    {{-- Search Bar --}}
-    <div class="mb-3">
-        <div class="relative">
-            <input type="text" id="search-input" placeholder="Cari alamat/lokasi..."
-                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-gray-400">
-            <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
+    <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-3 flex flex-wrap gap-4 text-xs">
+            <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-blue-600"></span> POP</span>
+            <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-green-600"></span> OLT</span>
         </div>
+        <div class="mb-3 relative">
+            <input type="text" id="search-input" placeholder="Cari alamat/lokasi..." class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-gray-400">
+            <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <div id="map" class="h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600 sm:h-[26rem]"></div>
     </div>
-
-    {{-- Peta Lokasi POP --}}
-    <div id="map" class="h-[500px] w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
-
-    @if($pop->alamat)
-    <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-        <span class="font-medium">Alamat:</span> {{ $pop->alamat }}
-    </div>
-    @endif
 </div>
+
+@php
+    $oltMapData = $pop->olts->map(function ($olt) {
+        return [
+            'nama' => $olt->nama_olt,
+            'kode' => $olt->kode_olt,
+            'latitude' => $olt->latitude,
+            'longitude' => $olt->longitude,
+        ];
+    })->values()->all();
+@endphp
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var lat = {{ $pop->latitude ?? '-6.9' }};
-    var lng = {{ $pop->longitude ?? '107.6' }};
-    var namaPop = "{{ $pop->nama_pop }}";
-    var kodePop = "{{ $pop->kode_pop }}";
-
-    var map = L.map('map').setView([lat, lng], 15);
+    var popLat = @json($pop->latitude);
+    var popLng = @json($pop->longitude);
+    var oltData = @json($oltMapData);
+    var map = L.map('map');
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Custom icon
-    var customIcon = L.divIcon({
+    var popIcon = L.divIcon({
         className: 'custom-marker',
         html: '<div style="background:#8b5cf6;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 6px rgba(0,0,0,0.3);border:3px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 20 20"><path d="M10 0C6.13 0 3 3.13 3 7c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 110-5 2.5 2.5 0 010 5z"/></svg></div>',
         iconSize: [40, 40],
@@ -73,52 +116,51 @@ document.addEventListener('DOMContentLoaded', function() {
         popupAnchor: [0, -40]
     });
 
-    var marker = L.marker([lat, lng], { icon: customIcon, draggable: true }).addTo(map);
+    var oltIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background:#22c55e;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 6px rgba(0,0,0,0.3);border:3px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="white" viewBox="0 0 20 20"><path d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/></svg></div>',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+    });
 
-    marker.bindPopup('<b>' + namaPop + '</b><br>' + kodePop).openPopup();
+    var markers = [];
+    if (popLat && popLng) {
+        L.marker([popLat, popLng], { icon: popIcon }).addTo(map)
+            .bindPopup('<b>POP: {{ $pop->nama_pop }}</b><br>{{ $pop->kode_pop }}')
+            .openPopup();
+        markers.push([popLat, popLng]);
+    }
 
-    // Search function
-    var searchMarker = null;
-    document.getElementById('search-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            var query = this.value;
-            if (query) {
-                fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query))
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.length > 0) {
-                            var result = data[0];
-                            var newLat = parseFloat(result.lat);
-                            var newLng = parseFloat(result.lon);
-
-                            if (searchMarker) {
-                                map.removeLayer(searchMarker);
-                            }
-
-                            searchMarker = L.marker([newLat, newLng], {
-                                icon: L.divIcon({
-                                    className: 'search-marker',
-                                    html: '<div style="background:#ef4444;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.3);border:3px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="white" viewBox="0 0 20 20"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>',
-                                    iconSize: [30, 30],
-                                    iconAnchor: [15, 15]
-                                })
-                            }).addTo(map);
-
-                            searchMarker.bindPopup('<b>Hasil Pencarian</b><br>' + result.display_name).openPopup();
-                            map.setView([newLat, newLng], 16);
-                        } else {
-                            alert('Lokasi tidak ditemukan');
-                        }
-                    })
-                    .catch(err => alert('Gagal mencari lokasi'));
-            }
+    oltData.forEach(function(olt) {
+        if (olt.latitude && olt.longitude) {
+            L.marker([olt.latitude, olt.longitude], { icon: oltIcon }).addTo(map)
+                .bindPopup('<b>OLT: ' + olt.nama + '</b><br>' + olt.kode);
+            markers.push([olt.latitude, olt.longitude]);
         }
     });
 
-    // Update marker position on drag
-    marker.on('dragend', function(e) {
-        var pos = marker.getLatLng();
-        marker.setPopupContent('<b>' + namaPop + '</b><br>' + kodePop + '<br>Lat: ' + pos.lat.toFixed(6) + '<br>Lng: ' + pos.lng.toFixed(6)).openPopup();
+    if (markers.length > 1) {
+        map.fitBounds(markers, { padding: [40, 40] });
+    } else if (markers.length) {
+        map.setView(markers[0], 15);
+    } else {
+        map.setView([-2.5, 118], 5);
+    }
+
+    var searchMarker = null;
+    document.getElementById('search-input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && this.value) {
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(this.value))
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.length) return alert('Lokasi tidak ditemukan');
+                    var result = data[0];
+                    if (searchMarker) map.removeLayer(searchMarker);
+                    searchMarker = L.marker([result.lat, result.lon]).addTo(map).bindPopup(result.display_name).openPopup();
+                    map.setView([result.lat, result.lon], 16);
+                })
+                .catch(() => alert('Gagal mencari lokasi'));
+        }
     });
 });
 </script>

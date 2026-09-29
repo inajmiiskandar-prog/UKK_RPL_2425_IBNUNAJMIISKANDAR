@@ -22,7 +22,7 @@
     </div>
     @endif
 
-    <form action="{{ route('users.update', $user->id_user) }}" method="POST" class="space-y-5">
+    <form action="{{ route('users.update', $user->id_user) }}" method="POST" enctype="multipart/form-data" class="space-y-5">
         @csrf @method('PUT')
         <div class="grid gap-5 md:grid-cols-2">
             <div>
@@ -71,6 +71,18 @@
             <div>
                 <label for="email" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>
                 <input type="email" id="email" name="email" value="{{ old('email', $user->email) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label for="foto" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Foto (ubah)</label>
+                <input type="file" id="foto" name="foto" accept="image/*" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-purple-600 hover:file:bg-purple-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-purple-900/30 dark:file:text-purple-400">
+                @error('foto')<p class="mt-1 text-xs text-red-500">{{ $message }}</p>@enderror
+            </div>
+            <div>
+                @if($user->foto)
+                <img src="{{ Storage::url($user->foto) }}" alt="Foto {{ $user->nama }}" class="h-12 w-12 rounded-full object-cover border border-gray-200">
+                @endif
             </div>
         </div>
         <div>

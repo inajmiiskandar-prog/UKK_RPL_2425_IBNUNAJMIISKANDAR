@@ -21,11 +21,17 @@ class BaaController extends Controller
     {
         $query = Baa::with(['fab', 'teknisi']);
 
-        if ($request->has('search') && $request->search) {
-            $query->where('kode_baa', 'like', '%' . $request->search . '%')
-                  ->orWhereHas('fab', function($q) use ($request) {
-                      $q->where('nama_pelanggan', 'like', '%' . $request->search . '%');
-                  });
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('kode_baa', 'like', "%{$search}%")
+                    ->orWhereHas('fab', function ($fabQuery) use ($search) {
+                        $fabQuery->where('nama_pelanggan', 'like', "%{$search}%")
+                            ->orWhere('kode_fab', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('teknisi', function ($teknisiQuery) use ($search) {
+                        $teknisiQuery->where('nama', 'like', "%{$search}%");
+                    });
+            });
         }
 
         if ($request->has('status') && $request->status) {
@@ -40,12 +46,37 @@ class BaaController extends Controller
 
     public function create()
     {
-        $fabs = Fab::with(['area', 'paket'])->where('status', 'OPEN')->orderBy('nama_pelanggan')->get();
+        // Get FABs that don't have completed BAA
+        $fabs = Fab::with(['area', 'paket'])
+            ->where(function($query) {
+                $query->where('status', 'OPEN')
+                    ->orWhere(function($q) {
+                        $q->where('status', 'AKTIF')
+                          ->whereDoesntHave('baa', function($subQ) {
+                              $subQ->where('status', 'SELESAI');
+                          });
+                    });
+            })
+            ->orderBy('nama_pelanggan')
+            ->get();
         $olts = Olt::with('pop.area')->orderBy('kode_olt')->get();
-        $onts = Ont::with('pop.area')->where('status', 'TERSDIA')->orderBy('serial_number')->get();
+        $onts = Ont::with('pop.area')
+            ->where(function($query) {
+                $query->where('status', 'TERSEDIA')
+                    ->orWhere('status', 'RUSAK');
+            })
+            ->orderBy('serial_number')
+            ->get();
         $odps = Odp::with('olt.pop.area')->orderBy('kode_odp')->get();
-        $materials = Material::where('kondisi', 'BAIK')->where('stok', '>', 0)->orderBy('nama_material')->get();
-        $teknisis = User::where('role', 'TEKNISI')->where('status', true)->orderBy('nama')->get();
+        $materials = Material::where('kondisi', 'BAIK')->where('stok', '>', 0)->whereColumn('stok', '>=', 'minimal_stok')->orderBy('nama_material')->get();
+        // Teknisi: jika login sebagai TEKNISI, hanya tampilkan dirinya sendiri
+        $teknisis = User::where('role', 'TEKNISI')
+            ->where('status', true)
+            ->when(auth()->user()->role === 'TEKNISI', function($query) {
+                $query->where('id_user', auth()->id());
+            })
+            ->orderBy('nama')
+            ->get();
 
         return view('jaringan.baa.create', compact('fabs', 'olts', 'onts', 'odps', 'materials', 'teknisis'));
     }
@@ -131,15 +162,26 @@ class BaaController extends Controller
             if ($request->material_ids) {
                 foreach ($request->material_ids as $index => $materialId) {
                     if ($materialId && isset($request->jumlahs[$index])) {
+                        $jumlah = $request->jumlahs[$index];
+                        $material = Material::find($materialId);
+
+                        // Check if stock is sufficient
+                        if ($material && $material->stok < $jumlah) {
+                            DB::rollBack();
+                            return redirect()->back()
+                                ->withInput()
+                                ->with('error', "Stok {$material->nama_material} tidak mencukupi! Stok tersedia: {$material->stok} {$material->satuan}");
+                        }
+
                         BaaDetail::create([
                             'id_baa' => $baa->id_baa,
                             'id_material' => $materialId,
-                            'jumlah' => $request->jumlahs[$index],
+                            'jumlah' => $jumlah,
                             'keterangan' => $request->keterangans[$index] ?? null,
                         ]);
 
                         // Reduce material stock
-                        Material::where('id_material', $materialId)->decrement('stok', $request->jumlahs[$index]);
+                        Material::where('id_material', $materialId)->decrement('stok', $jumlah);
                     }
                 }
             }
@@ -162,12 +204,45 @@ class BaaController extends Controller
 
     public function edit(Baa $baa)
     {
-        $fabs = Fab::with(['area', 'paket'])->orderBy('nama_pelanggan')->get();
+        // Get FABs - include current FAB and FABs without completed BAA
+        $fabs = Fab::with(['area', 'paket'])
+            ->where('id_fab', $baa->id_fab)
+            ->orWhere(function($query) {
+                $query->where('status', 'OPEN')
+                    ->orWhere(function($q) {
+                        $q->where('status', 'AKTIF')
+                          ->whereDoesntHave('baa', function($subQ) {
+                              $subQ->where('status', 'SELESAI');
+                          });
+                    });
+            })
+            ->orderBy('nama_pelanggan')
+            ->get();
         $olts = Olt::with('pop.area')->orderBy('kode_olt')->get();
-        $onts = Ont::with('pop.area')->orderBy('serial_number')->get();
+        $onts = Ont::with('pop.area')
+            ->where(function($query) use ($baa) {
+                $query->where('status', 'TERSEDIA')
+                    ->orWhere('status', 'RUSAK')
+                    ->orWhere('id_ont', $baa->id_ont);
+            })
+            ->orderBy('serial_number')
+            ->get();
         $odps = Odp::with('olt.pop.area')->orderBy('kode_odp')->get();
         $materials = Material::where('kondisi', 'BAIK')->orderBy('nama_material')->get();
-        $teknisis = User::where('role', 'TEKNISI')->where('status', true)->orderBy('nama')->get();
+        // Teknisi: jika login sebagai TEKNISI, hanya tampilkan dirinya sendiri (atau teknisi yang sudah dipilih di BAA ini)
+        $teknisis = User::where('role', 'TEKNISI')
+            ->where('status', true)
+            ->where(function($query) use ($baa) {
+                $query->where('id_user', $baa->id_user); // Include teknisi utama yang sudah dipilih
+                if ($baa->teknisiTambahan->isNotEmpty()) {
+                    $query->orWhereIn('id_user', $baa->teknisiTambahan->pluck('id_user'));
+                }
+            })
+            ->when(auth()->user()->role === 'TEKNISI', function($query) {
+                $query->where('id_user', auth()->id());
+            })
+            ->orderBy('nama')
+            ->get();
 
         $baa->load(['details', 'teknisiTambahan']);
 
@@ -238,6 +313,8 @@ class BaaController extends Controller
 
     public function destroy(Baa $baa)
     {
+        abort_unless(auth()->user()?->role === 'ADMIN', 403);
+
         try {
             DB::beginTransaction();
 

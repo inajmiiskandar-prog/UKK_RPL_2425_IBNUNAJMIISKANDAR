@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id('id_baa');
             $table->string('kode_baa')->unique();
             $table->dateTime('tanggal_instalasi');
-            $table->enum('status', ['SELESAI'])->default('SELESAI');
+            $table->enum('status', ['SELESAI', 'PENDING', 'PROGRES'])->default('PENDING');
             $table->string('catatan')->nullable();
             $table->string('foto_instalasi')->nullable();
             $table->foreignId('id_fab')->constrained('fab', 'id_fab');

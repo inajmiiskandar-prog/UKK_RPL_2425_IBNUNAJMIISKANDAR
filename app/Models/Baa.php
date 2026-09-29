@@ -12,6 +12,10 @@ class Baa extends Model
     const CREATED_AT = 'createdAt';
     const UPDATED_AT = 'updatedAt';
 
+    protected $casts = [
+        'tanggal_instalasi' => 'datetime',
+    ];
+
     protected $fillable = [
         'kode_baa', 'tanggal_instalasi', 'status', 'catatan', 'foto_instalasi',
         'id_fab', 'id_user', 'id_olt', 'id_ont', 'id_odp',

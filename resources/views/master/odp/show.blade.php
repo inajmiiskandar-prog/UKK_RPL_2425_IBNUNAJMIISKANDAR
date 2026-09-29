@@ -21,59 +21,61 @@
     </a>
 </div>
 
-<div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-    <div class="mb-4 flex items-center gap-3">
-        <div class="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30">
-            <svg class="h-5 w-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4"/></svg>
+<div class="grid gap-6 lg:grid-cols-3">
+    <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-5 flex items-center gap-3">
+            <div class="rounded-full bg-orange-100 p-2 dark:bg-orange-900/30">
+                <svg class="h-5 w-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4"/></svg>
+            </div>
+            <div>
+                <h2 class="font-display text-lg font-bold text-gray-800 dark:text-white">{{ $odp->nama_odp }}</h2>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ $odp->kode_odp }} • {{ $odp->olt->nama_olt ?? '-' }}</p>
+            </div>
         </div>
-        <div>
-            <h2 class="font-display text-lg font-bold text-gray-800 dark:text-white">{{ $odp->nama_odp }}</h2>
-            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $odp->kode_odp }} • {{ $odp->olt->nama_olt ?? '-' }} • {{ $odp->olt->pop->area->nama_area ?? '-' }}</p>
+
+        <div class="space-y-4 text-sm">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Alamat</p>
+                <p class="mt-1 font-medium text-gray-800 dark:text-white">{{ $odp->alamat ?: '-' }}</p>
+            </div>
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Jaringan</p>
+                <p class="mt-1 font-medium text-gray-800 dark:text-white">{{ $odp->olt->nama_olt ?? '-' }} <span class="text-gray-400">•</span> {{ $odp->olt->pop->nama_pop ?? '-' }}</p>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Latitude</p>
+                    <p class="mt-1 break-all font-medium text-gray-800 dark:text-white">{{ $odp->latitude ?: '-' }}</p>
+                </div>
+                <div>
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-400">Longitude</p>
+                    <p class="mt-1 break-all font-medium text-gray-800 dark:text-white">{{ $odp->longitude ?: '-' }}</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2 border-t border-gray-100 pt-4 dark:border-slate-700">
+                <div class="rounded-xl bg-orange-50 p-3 dark:bg-orange-900/20"><p class="text-xs text-orange-600 dark:text-orange-400">Total Port</p><p class="mt-1 text-xl font-bold text-orange-700 dark:text-orange-300">{{ $odp->jumlah_port ?? 0 }}</p></div>
+                <div class="rounded-xl bg-blue-50 p-3 dark:bg-blue-900/20"><p class="text-xs text-blue-600 dark:text-blue-400">Tersedia</p><p class="mt-1 text-xl font-bold text-blue-700 dark:text-blue-300">{{ $odp->stok_port ?? 0 }}</p></div>
+                <div class="rounded-xl bg-green-50 p-3 dark:bg-green-900/20"><p class="text-xs text-green-600 dark:text-green-400">Terpakai</p><p class="mt-1 text-xl font-bold text-green-700 dark:text-green-300">{{ ($odp->jumlah_port ?? 0) - ($odp->stok_port ?? 0) }}</p></div>
+            </div>
+            <div class="rounded-xl bg-purple-50 p-3 dark:bg-purple-900/20">
+                <p class="text-xs text-purple-600 dark:text-purple-400">ONT Terhubung</p>
+                <p class="mt-1 text-xl font-bold text-purple-700 dark:text-purple-300">{{ $odp->onts->count() }}</p>
+            </div>
         </div>
     </div>
 
-    {{-- Legend --}}
-    <div class="mb-3 flex flex-wrap gap-4 text-xs">
-        <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-orange-500"></span> ODP</span>
-        <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-green-600"></span> OLT</span>
-        <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-blue-600"></span> POP</span>
-        <span class="flex items-center gap-1"><span class="h-3 w-3 bg-orange-400"></span> Rute</span>
-    </div>
-
-    {{-- Search Bar --}}
-    <div class="mb-3">
-        <div class="relative">
-            <input type="text" id="search-input" placeholder="Cari alamat/lokasi..."
-                class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-gray-400">
-            <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
+    <div class="lg:col-span-2 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+        <div class="mb-3 flex flex-wrap gap-4 text-xs">
+            <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-orange-500"></span> ODP</span>
+            <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-green-600"></span> OLT</span>
+            <span class="flex items-center gap-1"><span class="h-3 w-3 rounded-full bg-blue-600"></span> POP</span>
+            <span class="flex items-center gap-1"><span class="h-1 w-4 bg-orange-500"></span> Rute</span>
         </div>
-    </div>
-
-    {{-- Peta --}}
-    <div id="map" class="h-[500px] w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
-
-    @if($odp->alamat)
-    <div class="mt-4 text-sm text-gray-600 dark:text-gray-400">
-        <span class="font-medium">Alamat:</span> {{ $odp->alamat }}
-    </div>
-    @endif
-
-    {{-- Info Port --}}
-    <div class="mt-4 grid grid-cols-3 gap-4 border-t border-gray-100 pt-4 dark:border-slate-700">
-        <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-400">Total Port</p>
-            <p class="mt-1 text-2xl font-bold text-gray-800 dark:text-white">{{ $odp->jumlah_port ?? 0 }}</p>
+        <div class="mb-3 relative">
+            <input type="text" id="search-input" placeholder="Cari alamat/lokasi..." class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 pl-12 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder:text-gray-400">
+            <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
-        <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-400">Stok Port</p>
-            <p class="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $odp->stok_port ?? 0 }}</p>
-        </div>
-        <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-gray-400">Terpakai</p>
-            <p class="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">{{ ($odp->jumlah_port ?? 0) - ($odp->stok_port ?? 0) }}</p>
-        </div>
+        <div id="map" class="h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600 sm:h-[26rem]"></div>
     </div>
 </div>
 
@@ -86,13 +88,12 @@ document.addEventListener('DOMContentLoaded', function() {
     var popLat = {{ $odp->olt->pop->latitude ?? 'null' }};
     var popLng = {{ $odp->olt->pop->longitude ?? 'null' }};
 
-    var map = L.map('map');
+    var map = L.map('map').setView([-6.2, 106.8], 12);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Custom icons
     var odpIcon = L.divIcon({
         className: 'custom-marker',
         html: '<div style="background:#f97316;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 6px rgba(0,0,0,0.3);border:3px solid white;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="white" viewBox="0 0 20 20"><path d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4"/></svg></div>',
@@ -116,101 +117,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
     var bounds = [];
 
-    // Add ODP marker
     if (odpLat && odpLng) {
-        var odpMarker = L.marker([odpLat, odpLng], { icon: odpIcon }).addTo(map);
-        odpMarker.bindPopup('<b>ODP: {{ $odp->nama_odp }}</b><br>{{ $odp->kode_odp }}').openPopup();
+        L.marker([odpLat, odpLng], { icon: odpIcon }).addTo(map)
+            .bindPopup('<b>ODP: {{ $odp->nama_odp }}</b>').openPopup();
         bounds.push([odpLat, odpLng]);
     }
 
-    // Add OLT marker
     if (oltLat && oltLng) {
-        var oltMarker = L.marker([oltLat, oltLng], { icon: oltIcon }).addTo(map);
-        oltMarker.bindPopup('<b>OLT: {{ $odp->olt->nama_olt ?? "OLT" }}</b><br>{{ $odp->olt->kode_olt ?? "" }}');
+        L.marker([oltLat, oltLng], { icon: oltIcon }).addTo(map)
+            .bindPopup('<b>OLT: {{ $odp->olt->nama_olt ?? "OLT" }}</b>');
         bounds.push([oltLat, oltLng]);
     }
 
-    // Add POP marker
     if (popLat && popLng) {
-        var popMarker = L.marker([popLat, popLng], { icon: popIcon }).addTo(map);
-        popMarker.bindPopup('<b>POP: {{ $odp->olt->pop->nama_pop ?? "POP" }}</b><br>{{ $odp->olt->pop->kode_pop ?? "" }}');
+        L.marker([popLat, popLng], { icon: popIcon }).addTo(map)
+            .bindPopup('<b>POP: {{ $odp->olt->pop->nama_pop ?? "POP" }}</b>');
         bounds.push([popLat, popLng]);
     }
 
-    // Draw routes
     if (bounds.length >= 2) {
-        // Route from OLT to ODP
-        if (oltLat && oltLng && odpLat && odpLng) {
-            L.Routing.control({
-                waypoints: [
-                    L.latLng(oltLat, oltLng),
-                    L.latLng(odpLat, odpLng)
-                ],
-                router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1'
-                }),
-                lineOptions: {
-                    styles: [{ color: '#f97316', weight: 4, opacity: 0.8 }]
-                },
-                createMarker: function() { return null; },
-                show: false
-            }).addTo(map);
-        }
-
-        // Route from POP to OLT
-        if (popLat && popLng && oltLat && oltLng) {
-            L.Routing.control({
-                waypoints: [
-                    L.latLng(popLat, popLng),
-                    L.latLng(oltLat, oltLng)
-                ],
-                router: L.Routing.osrmv1({
-                    serviceUrl: 'https://router.project-osrm.org/route/v1'
-                }),
-                lineOptions: {
-                    styles: [{ color: '#22c55e', weight: 4, opacity: 0.8 }]
-                },
-                createMarker: function() { return null; },
-                show: false
-            }).addTo(map);
-        }
-
         map.fitBounds(bounds, { padding: [50, 50] });
     } else if (bounds.length === 1) {
         map.setView(bounds[0], 15);
-    } else {
-        map.setView([-2.5, 118.0], 5);
     }
-
-    // Search function
-    var searchMarker = null;
-    document.getElementById('search-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            var query = this.value;
-            if (query) {
-                fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query))
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data && data.length > 0) {
-                            var result = data[0];
-                            var newLat = parseFloat(result.lat);
-                            var newLng = parseFloat(result.lon);
-
-                            if (searchMarker) {
-                                map.removeLayer(searchMarker);
-                            }
-
-                            searchMarker = L.marker([newLat, newLng]).addTo(map);
-                            searchMarker.bindPopup('<b>Hasil Pencarian</b><br>' + result.display_name).openPopup();
-                            map.setView([newLat, newLng], 16);
-                        } else {
-                            alert('Lokasi tidak ditemukan');
-                        }
-                    })
-                    .catch(err => alert('Gagal mencari lokasi'));
-            }
-        }
-    });
 });
 </script>
 @endsection

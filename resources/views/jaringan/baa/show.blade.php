@@ -24,6 +24,15 @@
     {{-- Data Pelanggan --}}
     <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
         <h3 class="mb-4 font-semibold text-gray-800 dark:text-white">Data Pelanggan</h3>
+        <div class="mb-6 flex items-center gap-4">
+            @if($baa->foto_instalasi)
+            <img src="{{ Storage::url($baa->foto_instalasi) }}" alt="Foto BAA {{ $baa->kode_baa }}" class="h-20 w-20 cursor-pointer rounded-full border-2 border-gray-200 object-cover shadow-sm transition hover:scale-105" onclick="openBaaPhoto(this)">
+            @elseif($baa->fab && $baa->fab->foto)
+            <img src="{{ Storage::url($baa->fab->foto) }}" alt="Foto {{ $baa->fab->nama_pelanggan }}" class="h-20 w-20 cursor-pointer rounded-full border-2 border-gray-200 object-cover shadow-sm transition hover:scale-105" onclick="openBaaPhoto(this)">
+            @else
+            <div class="h-20 w-20 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-2xl font-bold text-white shadow-sm">{{ substr($baa->fab->nama_pelanggan ?? '-', 0, 1) }}</div>
+            @endif
+        </div>
         <div class="space-y-3">
             <div class="flex justify-between">
                 <span class="text-sm text-gray-500">Kode FAB</span>
@@ -171,5 +180,31 @@
         </table>
     </div>
 </div>
+
+<div id="baaPhotoModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/80 p-4" onclick="closeBaaPhoto()">
+    <button type="button" class="absolute right-4 top-4 rounded-full bg-white/15 p-2 text-white transition hover:bg-white/30" aria-label="Tutup foto">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+    <img id="baaPhotoPreview" src="" alt="Foto BAA" class="max-h-[90vh] max-w-full rounded-2xl object-contain shadow-2xl" onclick="event.stopPropagation()">
+</div>
+
+<script>
+function openBaaPhoto(image) {
+    document.getElementById('baaPhotoPreview').src = image.src;
+    document.getElementById('baaPhotoModal').classList.remove('hidden');
+    document.getElementById('baaPhotoModal').classList.add('flex');
+    document.body.classList.add('overflow-hidden');
+}
+
+function closeBaaPhoto() {
+    document.getElementById('baaPhotoModal').classList.add('hidden');
+    document.getElementById('baaPhotoModal').classList.remove('flex');
+    document.body.classList.remove('overflow-hidden');
+}
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') closeBaaPhoto();
+});
+</script>
 @endif
 @endsection

@@ -27,6 +27,14 @@
                 <svg class="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
         </div>
+        <select name="divisi" class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            <option value="">Semua Divisi</option>
+            @isset($divisiList)
+                @foreach($divisiList as $divisi)
+                <option value="{{ $divisi }}" {{ request('divisi') == $divisi ? 'selected' : '' }}>{{ $divisi }}</option>
+                @endforeach
+            @endisset
+        </select>
         <select name="role" class="rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
             <option value="">Semua Role</option>
             <option value="ADMIN" {{ request('role') == 'ADMIN' ? 'selected' : '' }}>Admin</option>
@@ -62,9 +70,13 @@
                 <tr class="hover:bg-gray-50 dark:hover:bg-slate-700">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white text-sm font-bold">
-                                {{ substr($user->nama, 0, 1) }}
-                            </div>
+                            @if($user->foto)
+                                <img src="{{ Storage::url($user->foto) }}" alt="Foto {{ $user->nama }}" class="h-10 w-10 rounded-full object-cover">
+                            @else
+                                <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white text-sm font-bold">
+                                    {{ substr($user->nama, 0, 1) }}
+                                </div>
+                            @endif
                             <div>
                                 <p class="font-medium text-gray-800 dark:text-white">{{ $user->nama }}</p>
                                 <p class="text-xs text-gray-500 dark:text-gray-400">{{ $user->email ?? '-' }}</p>

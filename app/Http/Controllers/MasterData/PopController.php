@@ -14,10 +14,12 @@ class PopController extends Controller
     {
         $query = Pop::with('area');
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama_pop', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_pop', 'like', '%' . $request->search . '%')
-                  ->orWhere('alamat', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama_pop', 'like', "%{$search}%")
+                    ->orWhere('kode_pop', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%");
+            });
         }
 
         if ($request->has('area') && $request->area) {

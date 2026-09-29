@@ -14,10 +14,12 @@ class OltController extends Controller
     {
         $query = Olt::with('pop');
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama_olt', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_olt', 'like', '%' . $request->search . '%')
-                  ->orWhere('ip_olt', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama_olt', 'like', "%{$search}%")
+                    ->orWhere('kode_olt', 'like', "%{$search}%")
+                    ->orWhere('ip_olt', 'like', "%{$search}%");
+            });
         }
 
         if ($request->has('pop') && $request->pop) {

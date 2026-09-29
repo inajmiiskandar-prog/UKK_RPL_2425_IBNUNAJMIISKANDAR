@@ -102,6 +102,17 @@
                         <option value="Bebas Neue" {{ ($settings['font_family_display'] ?? 'Sora') == 'Bebas Neue' ? 'selected' : '' }}>Bebas Neue</option>
                         <option value="Oswald" {{ ($settings['font_family_display'] ?? 'Sora') == 'Oswald' ? 'selected' : '' }}>Oswald</option>
                         <option value="Raleway" {{ ($settings['font_family_display'] ?? 'Sora') == 'Raleway' ? 'selected' : '' }}>Raleway</option>
+                        <option value="DM Sans" {{ ($settings['font_family_display'] ?? 'Sora') == 'DM Sans' ? 'selected' : '' }}>DM Sans</option>
+                        <option value="Manrope" {{ ($settings['font_family_display'] ?? 'Sora') == 'Manrope' ? 'selected' : '' }}>Manrope</option>
+                        <option value="Space Grotesk" {{ ($settings['font_family_display'] ?? 'Sora') == 'Space Grotesk' ? 'selected' : '' }}>Space Grotesk</option>
+                        <option value="Plus Jakarta Sans" {{ ($settings['font_family_display'] ?? 'Sora') == 'Plus Jakarta Sans' ? 'selected' : '' }}>Plus Jakarta Sans</option>
+                        <option value="Barlow" {{ ($settings['font_family_display'] ?? 'Sora') == 'Barlow' ? 'selected' : '' }}>Barlow</option>
+                        <option value="Archivo" {{ ($settings['font_family_display'] ?? 'Sora') == 'Archivo' ? 'selected' : '' }}>Archivo</option>
+                        <option value="Urbanist" {{ ($settings['font_family_display'] ?? 'Sora') == 'Urbanist' ? 'selected' : '' }}>Urbanist</option>
+                        <option value="Outfit" {{ ($settings['font_family_display'] ?? 'Sora') == 'Outfit' ? 'selected' : '' }}>Outfit</option>
+                        <option value="Bitter" {{ ($settings['font_family_display'] ?? 'Sora') == 'Bitter' ? 'selected' : '' }}>Bitter</option>
+                        <option value="Merriweather" {{ ($settings['font_family_display'] ?? 'Sora') == 'Merriweather' ? 'selected' : '' }}>Merriweather</option>
+                        <option value="Libre Baskerville" {{ ($settings['font_family_display'] ?? 'Sora') == 'Libre Baskerville' ? 'selected' : '' }}>Libre Baskerville</option>
                     </select>
                 </div>
 
@@ -116,6 +127,21 @@
                         <option value="Nunito" {{ ($settings['font_family_body'] ?? 'Inter') == 'Nunito' ? 'selected' : '' }}>Nunito</option>
                         <option value="Work Sans" {{ ($settings['font_family_body'] ?? 'Inter') == 'Work Sans' ? 'selected' : '' }}>Work Sans</option>
                         <option value="Quicksand" {{ ($settings['font_family_body'] ?? 'Inter') == 'Quicksand' ? 'selected' : '' }}>Quicksand</option>
+                        <option value="DM Sans" {{ ($settings['font_family_body'] ?? 'Inter') == 'DM Sans' ? 'selected' : '' }}>DM Sans</option>
+                        <option value="DM Serif Display" {{ ($settings['font_family_body'] ?? 'Inter') == 'DM Serif Display' ? 'selected' : '' }}>DM Serif Display</option>
+                        <option value="Nunito Sans" {{ ($settings['font_family_body'] ?? 'Inter') == 'Nunito Sans' ? 'selected' : '' }}>Nunito Sans</option>
+                        <option value="Source Sans 3" {{ ($settings['font_family_body'] ?? 'Inter') == 'Source Sans 3' ? 'selected' : '' }}>Source Sans 3</option>
+                        <option value="IBM Plex Sans" {{ ($settings['font_family_body'] ?? 'Inter') == 'IBM Plex Sans' ? 'selected' : '' }}>IBM Plex Sans</option>
+                        <option value="Mulish" {{ ($settings['font_family_body'] ?? 'Inter') == 'Mulish' ? 'selected' : '' }}>Mulish</option>
+                        <option value="Rubik" {{ ($settings['font_family_body'] ?? 'Inter') == 'Rubik' ? 'selected' : '' }}>Rubik</option>
+                        <option value="Manrope" {{ ($settings['font_family_body'] ?? 'Inter') == 'Manrope' ? 'selected' : '' }}>Manrope</option>
+                        <option value="Plus Jakarta Sans" {{ ($settings['font_family_body'] ?? 'Inter') == 'Plus Jakarta Sans' ? 'selected' : '' }}>Plus Jakarta Sans</option>
+                        <option value="Figtree" {{ ($settings['font_family_body'] ?? 'Inter') == 'Figtree' ? 'selected' : '' }}>Figtree</option>
+                        <option value="Cabin" {{ ($settings['font_family_body'] ?? 'Inter') == 'Cabin' ? 'selected' : '' }}>Cabin</option>
+                        <option value="Barlow" {{ ($settings['font_family_body'] ?? 'Inter') == 'Barlow' ? 'selected' : '' }}>Barlow</option>
+                        <option value="Karla" {{ ($settings['font_family_body'] ?? 'Inter') == 'Karla' ? 'selected' : '' }}>Karla</option>
+                        <option value="PT Sans" {{ ($settings['font_family_body'] ?? 'Inter') == 'PT Sans' ? 'selected' : '' }}>PT Sans</option>
+                        <option value="Source Serif 4" {{ ($settings['font_family_body'] ?? 'Inter') == 'Source Serif 4' ? 'selected' : '' }}>Source Serif 4</option>
                     </select>
                 </div>
 
@@ -245,11 +271,34 @@
     });
 
     // Font preview
-    document.querySelector('select[name="font_family_display"]').addEventListener('change', function(e) {
-        document.getElementById('font-display-preview').style.fontFamily = "'" + e.target.value + "', sans-serif";
+    const loadedPreviewFonts = new Set();
+
+    function loadPreviewFont(fontFamily) {
+        if (loadedPreviewFonts.has(fontFamily)) {
+            return;
+        }
+
+        const fontLink = document.createElement('link');
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=' + encodeURIComponent(fontFamily).replace(/%20/g, '+') + ':wght@400&display=swap';
+        document.head.appendChild(fontLink);
+        loadedPreviewFonts.add(fontFamily);
+    }
+
+    function updateFontPreview(selectName, previewId) {
+        const fontFamily = document.querySelector(selectName).value;
+        loadPreviewFont(fontFamily);
+        document.getElementById(previewId).style.fontFamily = "'" + fontFamily + "', sans-serif";
+    }
+
+    updateFontPreview('select[name="font_family_display"]', 'font-display-preview');
+    updateFontPreview('select[name="font_family_body"]', 'font-body-preview');
+
+    document.querySelector('select[name="font_family_display"]').addEventListener('change', function() {
+        updateFontPreview('select[name="font_family_display"]', 'font-display-preview');
     });
-    document.querySelector('select[name="font_family_body"]').addEventListener('change', function(e) {
-        document.getElementById('font-body-preview').style.fontFamily = "'" + e.target.value + "', sans-serif";
+    document.querySelector('select[name="font_family_body"]').addEventListener('change', function() {
+        updateFontPreview('select[name="font_family_body"]', 'font-body-preview');
     });
 </script>
 @endpush

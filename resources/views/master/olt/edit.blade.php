@@ -6,9 +6,9 @@
 
 @section('content')
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
 
 <div class="mb-6">
     <a href="{{ route('masterdata.olt.index') }}" class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400">
@@ -36,73 +36,77 @@
             </div>
             <div>
                 <label for="nama_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Nama OLT <span class="text-red-500">*</span></label>
-                <input type="text" id="nama_olt" name="nama_olt" value="{{ old('nama_olt', $olt->nama_olt) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>
+                <input type="text" id="nama_olt" name="nama_olt" value="{{ old('nama_olt', $olt->nama_olt) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" required>
             </div>
         </div>
 
-        {{-- Info & Credential Section --}}
-        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-700/50">
-            <h4 class="mb-3 font-semibold text-gray-700 dark:text-gray-200">Info & Credential</h4>
-            <div class="grid gap-4 md:grid-cols-2">
-                <div>
-                    <label for="id_pop" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">POP <span class="text-red-500">*</span></label>
-                    <select id="id_pop" name="id_pop" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" required onchange="updateCoordsFromPop()">
-                        @foreach($pops as $pop)
-                        <option value="{{ $pop->id_pop }}" data-lat="{{ $pop->latitude }}" data-lng="{{ $pop->longitude }}" data-lokasi="{{ $pop->lokasi }}" {{ $olt->id_pop == $pop->id_pop ? 'selected' : '' }}>{{ $pop->kode_pop }} - {{ $pop->nama_pop }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div>
-                    <label for="lokasi" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi</label>
-                    <input type="text" id="lokasi" name="lokasi" value="{{ old('lokasi', $olt->lokasi) }}" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                </div>
-                <div>
-                    <label for="ip_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">IP Address</label>
-                    <input type="text" id="ip_olt" name="ip_olt" value="{{ old('ip_olt', $olt->ip_olt) }}" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                </div>
-                <div>
-                    <label for="username_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Username</label>
-                    <input type="text" id="username_olt" name="username_olt" value="{{ old('username_olt', $olt->username_olt) }}" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label for="id_pop" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">POP <span class="text-red-500">*</span></label>
+                <select id="id_pop" name="id_pop" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" required onchange="updateCoordsFromPop()">
+                    @foreach($pops as $pop)
+                    <option value="{{ $pop->id_pop }}" data-lat="{{ $pop->latitude }}" data-lng="{{ $pop->longitude }}" data-lokasi="{{ $pop->lokasi }}" {{ $olt->id_pop == $pop->id_pop ? 'selected' : '' }}>{{ $pop->kode_pop }} - {{ $pop->nama_pop }}</option>
+                    @endforeach
+                </select>
             </div>
-            <div class="mt-4 grid gap-4 md:grid-cols-2">
-                <div>
-                    <label for="password_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Password</label>
-                    <input type="password" id="password_olt" name="password_olt" placeholder="Kosongkan jika tidak diubah" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                </div>
-                <div>
-                    <label for="foto_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Foto OLT</label>
-                    @if($olt->foto_olt)
-                    <div class="mb-2">
-                        <img src="{{ asset('storage/' . $olt->foto_olt) }}" alt="Foto OLT" class="h-16 w-auto rounded-lg border border-gray-200 dark:border-slate-600">
-                        <span class="ml-2 text-xs text-gray-500">Foto saat ini</span>
-                    </div>
-                    @endif
-                    <input type="file" id="foto_olt" name="foto_olt" accept="image/*" class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-purple-700 hover:file:bg-purple-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-purple-900 dark:file:text-purple-300">
-                    <p class="mt-1 text-xs text-gray-500">Format: jpeg, png, jpg, gif, svg. Maksimal 2MB</p>
-                </div>
+            <div>
+                <label for="lokasi" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi</label>
+                <input type="text" id="lokasi" name="lokasi" value="{{ old('lokasi', $olt->lokasi) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white">
             </div>
         </div>
 
-        {{-- Peta Interaktif (Bottom) --}}
-        <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-            <h4 class="mb-3 font-semibold text-gray-700 dark:text-gray-200">Lokasi Pada Peta</h4>
-            <div id="map" class="mb-3 h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
-            <div class="grid gap-4 md:grid-cols-2">
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label for="ip_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">IP Address</label>
+                <input type="text" id="ip_olt" name="ip_olt" value="{{ old('ip_olt', $olt->ip_olt) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+            <div>
+                <label for="username_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Username</label>
+                <input type="text" id="username_olt" name="username_olt" value="{{ old('username_olt', $olt->username_olt) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+        </div>
+
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label for="password_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Password</label>
+                <input type="password" id="password_olt" name="password_olt" placeholder="Kosongkan jika tidak diubah" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+            <div>
+                <label for="foto_olt" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Foto OLT</label>
+                @if($olt->foto_olt)
+                <div class="mb-2 flex items-center gap-2">
+                    <img src="{{ Storage::url($olt->foto_olt) }}" alt="Foto OLT" class="h-10 w-10 rounded-lg object-cover border border-gray-200 dark:border-slate-600">
+                    <span class="text-xs text-gray-500">Ada</span>
+                </div>
+                @endif
+                <input type="file" id="foto_olt" name="foto_olt" accept="image/*" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-purple-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-purple-600 hover:file:bg-purple-100 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:file:bg-purple-900/30 dark:file:text-purple-400">
+            </div>
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Lokasi</label>
+            <div id="map" class="h-80 w-full rounded-xl border border-gray-200 dark:border-slate-600"></div>
+            <div class="flex items-center gap-2 mt-2">
+                <button type="button" id="btn-gps" class="flex items-center gap-1.5 rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-600">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    GPS Saya
+                </button>
+                <span class="text-xs text-gray-500">Klik peta atau cari alamat untuk memilih lokasi</span>
+            </div>
+            <div class="grid gap-5 md:grid-cols-2 mt-3">
                 <div>
                     <label for="latitude" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Latitude</label>
-                    <input type="text" id="latitude" name="latitude" value="{{ old('latitude', $olt->latitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
+                    <input type="text" id="latitude" name="latitude" value="{{ old('latitude', $olt->latitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
                 </div>
                 <div>
                     <label for="longitude" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Longitude</label>
-                    <input type="text" id="longitude" name="longitude" value="{{ old('longitude', $olt->longitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
+                    <input type="text" id="longitude" name="longitude" value="{{ old('longitude', $olt->longitude) }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white" readonly>
                 </div>
             </div>
-            <p class="mt-2 text-xs text-gray-500">💡 Klik pada peta atau geser marker untuk menentukan lokasi</p>
         </div>
 
         <div class="flex items-center gap-3 pt-4">
-            <button type="submit" class="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700 hover:shadow-xl">
+            <button type="submit" class="flex items-center gap-2 rounded-xl bg-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                 Update
             </button>
@@ -112,19 +116,20 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    var lat = {{ old('latitude', $olt->latitude ?? '-2.5') }};
-    var lng = {{ old('longitude', $olt->longitude ?? '118.0') }};
+var map, marker;
 
-    var map = L.map('map').setView([lat, lng], {{ $olt->latitude ? '15' : '5' }});
+document.addEventListener('DOMContentLoaded', function() {
+    var lat = {{ old('latitude', $olt->latitude ?? '-6.2') }};
+    var lng = {{ old('longitude', $olt->longitude ?? '106.8') }};
+
+    map = L.map('map').setView([lat, lng], 15);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    var marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
 
-    // Add search control
     L.Control.geocoder({
         defaultMarkGeocode: true
     }).on('markgeocode', function(e) {
@@ -142,10 +147,25 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     marker.on('dragend', updateInputs);
-
     map.on('click', function(e) {
         marker.setLatLng(e.latlng);
         updateInputs();
+    });
+
+    document.getElementById('btn-gps').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                var pos = [position.coords.latitude, position.coords.longitude];
+                marker.setLatLng(pos);
+                map.setView(pos, 16);
+                document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+            }, function() {
+                alert('Tidak bisa mendapatkan lokasi GPS');
+            });
+        } else {
+            alert('Browser tidak mendukung GPS');
+        }
     });
 
     @if($olt->latitude && $olt->longitude)
@@ -153,7 +173,6 @@ document.addEventListener('DOMContentLoaded', function() {
     @endif
 });
 
-// Auto update coords and lokasi when POP is selected
 function updateCoordsFromPop() {
     var select = document.getElementById('id_pop');
     var option = select.options[select.selectedIndex];
@@ -161,7 +180,6 @@ function updateCoordsFromPop() {
     var lng = option.getAttribute('data-lng');
     var lokasi = option.getAttribute('data-lokasi');
 
-    // Auto-fill lokasi from POP if empty
     var lokasiInput = document.getElementById('lokasi');
     if (!lokasiInput.value && lokasi) {
         lokasiInput.value = lokasi;
@@ -170,17 +188,8 @@ function updateCoordsFromPop() {
     if (lat && lng) {
         document.getElementById('latitude').value = lat;
         document.getElementById('longitude').value = lng;
-
-        var map = L.map('map');
+        marker.setLatLng([lat, lng]);
         map.setView([lat, lng], 16);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        L.Control.geocoder({ defaultMarkGeocode: true }).addTo(map);
-
-        L.marker([lat, lng], { draggable: true }).addTo(map);
     }
 }
 </script>

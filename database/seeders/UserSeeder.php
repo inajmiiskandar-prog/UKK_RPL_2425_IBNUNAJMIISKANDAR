@@ -10,14 +10,16 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'kode_user' => 'USR-001',
-            'nama' => 'Administrator',
-            'username' => 'admin',
-            'password' => Hash::make('123456'),
-            'jkl' => 'LAKI_LAKI',
-            'role' => 'ADMIN',
-            'status' => true,
-        ]);
+        User::updateOrCreate(
+            ['username' => 'admin'],
+            [
+                'kode_user' => 'USR-001',
+                'nama' => 'Administrator',
+                'password' => Hash::make('123456'),
+                'jkl' => 'LAKI_LAKI',
+                'role' => 'ADMIN',
+                'status' => true,
+            ]
+        );
     }
 }

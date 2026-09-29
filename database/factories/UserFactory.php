@@ -16,6 +16,8 @@ class UserFactory extends Factory
      */
     protected static ?string $password;
 
+    protected static int $userCount = 0;
+
     /**
      * Define the model's default state.
      *
@@ -23,10 +25,21 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->name();
+        $email = fake()->unique()->safeEmail();
+        $username = fake()->unique()->userName();
+
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
+            'kode_user' => 'USR-'.str_pad(++self::$userCount, 3, '0', STR_PAD_LEFT),
+            'kode_karyawan' => 'EMP'.str_pad(++self::$userCount, 3, '0', STR_PAD_LEFT),
+            'nama' => $name,
+            'name' => $name,
+            'username' => $username,
+            'email' => $email,
             'email_verified_at' => now(),
+            'jkl' => fake()->randomElement(['LAKI_LAKI', 'PEREMPUAN']),
+            'role' => fake()->randomElement(['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK']),
+            'status' => true,
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];

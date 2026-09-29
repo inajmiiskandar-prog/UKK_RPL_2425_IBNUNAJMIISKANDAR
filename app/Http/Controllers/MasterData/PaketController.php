@@ -13,10 +13,12 @@ class PaketController extends Controller
     {
         $query = Paket::query();
 
-        if ($request->has('search') && $request->search) {
-            $query->where('nama_paket', 'like', '%' . $request->search . '%')
-                  ->orWhere('kode_paket', 'like', '%' . $request->search . '%')
-                  ->orWhere('kecepatan', 'like', '%' . $request->search . '%');
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery->where('nama_paket', 'like', "%{$search}%")
+                    ->orWhere('kode_paket', 'like', "%{$search}%")
+                    ->orWhere('kecepatan', 'like', "%{$search}%");
+            });
         }
 
         $pakets = $query->orderBy('kode_paket')->paginate(10);
