@@ -351,4 +351,115 @@ class KpiEmployeeController extends Controller
                            ->with('error', 'Gagal mengubah status: ' . $e->getMessage());
         }
     }
+
+    /**
+     * Export data karyawan ke format Excel (HTML table)
+     *
+     * Akses: ADMIN dan HR saja
+     * Parameter:
+     * - ids: daftar id_user yang dipilih (prioritas jika ada)
+     * - search: filter berdasarkan nama, kode_user, kode_karyawan, nik, divisi, jabatan
+     */
+    public function export(Request $request)
+    {
+        // Cek hak akses: ADMIN dan HR saja
+        $user = auth()->user();
+        if (!in_array($user->role, ['ADMIN', 'HR'])) {
+            abort(403, 'Anda tidak memiliki akses untuk export data karyawan!');
+        }
+
+        $query = User::query()->with('atasan');
+
+        // Prioritas: jika ada ids, gunakan ids tersebut
+        if ($request->filled('ids')) {
+            $ids = is_array($request->ids) ? $request->ids : explode(',', $request->ids);
+            $query->whereIn('id_user', $ids);
+        }
+        // Jika tidak ada ids, gunakan filter search
+        elseif ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                  ->orWhere('kode_user', 'like', "%{$search}%")
+                  ->orWhere('kode_karyawan', 'like', "%{$search}%")
+                  ->orWhere('nik', 'like', "%{$search}%")
+                  ->orWhere('divisi', 'like', "%{$search}%")
+                  ->orWhere('jabatan', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $employees = $query->orderBy('nama')->get();
+
+        // Jika tidak ada data, kembalikan pesan
+        if ($employees->isEmpty()) {
+            return back()->with('error', 'Tidak ada data karyawan yang sesuai dengan filter!');
+        }
+
+        // Generate HTML untuk Excel
+        $html = $this->generateExportHtml($employees);
+
+        $filename = "Data_Karyawan_" . date('Ymd_His') . ".xls";
+
+        return response($html)
+            ->header('Content-Type', 'application/vnd.ms-excel')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    }
+
+    /**
+     * Generate HTML untuk export Excel
+     */
+    private function generateExportHtml($employees)
+    {
+        $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
+        $html .= '<head><meta charset="utf-8"></head><body>';
+        $html .= '<table border="1">';
+
+        // Title
+        $html .= '<tr><td colspan="12" style="font-weight:bold;font-size:14pt;">DATA KARYAWAN</td></tr>';
+        $html .= '<tr><td colspan="12">Dicetak pada: ' . date('d/m/Y H:i:s') . '</td></tr>';
+        $html .= '<tr></tr>';
+
+        // Header
+        $headers = ['No', 'Kode Karyawan', 'Nama', 'Username', 'Email', 'No HP', 'NIK', 'Divisi', 'Jabatan', 'Atasan', 'Role', 'Status'];
+        $html .= '<tr>';
+        foreach ($headers as $h) {
+            $html .= "<th style=\"background:#9333ea;color:white;\">{$h}</th>";
+        }
+        $html .= '</tr>';
+
+        // Data
+        $no = 1;
+        foreach ($employees as $emp) {
+            $bg = $no % 2 === 0 ? '#f3e8ff' : '#ffffff';
+
+            $kodeKaryawan = $emp->kode_karyawan ?: ($emp->kode_user ?: '-');
+            $noHp = $emp->no_hp ?: ($emp->no_telp ?: '-');
+            $atasanNama = $emp->atasan ? $emp->atasan->nama : '-';
+
+            $html .= "<tr style=\"background:{$bg}\">";
+            $html .= "<td>{$no}</td>";
+            $html .= "<td>{$kodeKaryawan}</td>";
+            $html .= "<td>{$emp->nama}</td>";
+            $html .= "<td>" . ($emp->username ?: '-') . "</td>";
+            $html .= "<td>{$emp->email}</td>";
+            $html .= "<td>{$noHp}</td>";
+            $html .= "<td>" . ($emp->nik ?: '-') . "</td>";
+            $html .= "<td>" . ($emp->divisi ?: '-') . "</td>";
+            $html .= "<td>" . ($emp->jabatan ?: '-') . "</td>";
+            $html .= "<td>{$atasanNama}</td>";
+            $html .= "<td>{$emp->role}</td>";
+            $html .= "<td>" . ($emp->status ? 'Active' : 'Nonaktif') . "</td>";
+            $html .= '</tr>';
+            $no++;
+        }
+
+        // Footer
+        $html .= '<tr></tr>';
+        $html .= "<tr><td colspan=\"12\">Total: {$employees->count()} karyawan</td></tr>";
+
+        $html .= '</table></body></html>';
+
+        return $html;
+    }
 }
