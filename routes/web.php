@@ -103,6 +103,11 @@ Route::middleware('auth')->group(function () {
         Route::resource('hard-skill', KpiHardSkillController::class);
     });
 
+    // KPI Dashboard - semua role login bisa akses
+    Route::prefix('kpi')->name('kpi.')->group(function () {
+        Route::get('dashboard', [App\Http\Controllers\Kpi\KpiDashboardController::class, 'index'])->name('dashboard');
+    });
+
     // Data Karyawan - ADMIN bisa edit, semua bisa lihat
     Route::prefix('kpi')->name('kpi.')->group(function () {
         Route::resource('employee', KpiEmployeeController::class)->only(['index', 'show', 'create', 'store']);
