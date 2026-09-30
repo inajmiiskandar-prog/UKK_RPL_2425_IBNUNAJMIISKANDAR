@@ -110,6 +110,10 @@ Route::middleware('auth')->group(function () {
 
     // Data Karyawan - ADMIN bisa edit, semua bisa lihat
     Route::prefix('kpi')->name('kpi.')->group(function () {
+        // Export harus sebelum resource route agar tidak tertangkap wildcard
+        Route::middleware('role:ADMIN,HR')->group(function () {
+            Route::get('employee/export', [KpiEmployeeController::class, 'export'])->name('employee.export');
+        });
         Route::resource('employee', KpiEmployeeController::class)->only(['index', 'show', 'create', 'store']);
         Route::middleware('role:ADMIN')->group(function () {
             Route::resource('employee', KpiEmployeeController::class)->only(['edit', 'update']);
