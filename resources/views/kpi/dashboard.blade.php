@@ -21,6 +21,7 @@
 @endpush
 
 @section('content')
+@include('partials.dashboard-tabs')
 {{-- Filter Periode --}}
 <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <form method="GET" class="flex flex-wrap items-end gap-4">

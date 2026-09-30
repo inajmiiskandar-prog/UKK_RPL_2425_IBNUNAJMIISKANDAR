@@ -49,6 +49,7 @@
 @endpush
 
 @section('content')
+@include('partials.dashboard-tabs')
 {{-- Statistics Cards --}}
 <div class="grid grid-cols-2 gap-4 lg:grid-cols-4 mb-6">
     {{-- Total Pelanggan --}}
