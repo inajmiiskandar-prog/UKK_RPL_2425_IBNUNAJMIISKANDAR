@@ -10,12 +10,20 @@
         <h1 class="font-display text-2xl font-bold text-gray-800 dark:text-white">Data Karyawan</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400">Lihat dan kelola data karyawan untuk KPI</p>
     </div>
-    @if(auth()->user()->role === 'ADMIN')
-    <a href="{{ route('kpi.employee.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-        Tambah Karyawan
-    </a>
-    @endif
+    <div class="flex items-center gap-2">
+        @if(in_array(auth()->user()->role, ['ADMIN', 'HR']))
+        <a href="{{ route('kpi.employee.export') }}" class="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-green-500/30 hover:bg-green-700">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export
+        </a>
+        @endif
+        @if(auth()->user()->role === 'ADMIN')
+        <a href="{{ route('kpi.employee.create') }}" class="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-purple-500/30 hover:bg-purple-700">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Tambah Karyawan
+        </a>
+        @endif
+    </div>
 </div>
 
 @if(session('success'))<div class="mb-4 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400">{{ session('success') }}</div>@endif
