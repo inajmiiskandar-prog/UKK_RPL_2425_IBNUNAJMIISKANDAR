@@ -412,16 +412,25 @@
                         </svg>
                     </button>
 
-                    {{-- Notifications --}}
+                    {{-- Notifications (hanya tampilkan aktivitas user yang login) --}}
                     @php
                         $notificationReadAt = session('notifications_read_at');
-                        $notifications = App\Models\ActivityLog::with('user')
-                            ->latest('createdAt')
-                            ->limit(5)
-                            ->get();
-                        $unreadNotifications = $notificationReadAt
-                            ? App\Models\ActivityLog::where('createdAt', '>', $notificationReadAt)->count()
-                            : App\Models\ActivityLog::count();
+                        if (Auth::check()) {
+                            $currentUserId = Auth::user()->id_user;
+                            $notifications = App\Models\ActivityLog::with('user')
+                                ->where('id_user', $currentUserId)
+                                ->latest('createdAt')
+                                ->limit(5)
+                                ->get();
+                            $unreadNotifications = $notificationReadAt
+                                ? App\Models\ActivityLog::where('id_user', $currentUserId)
+                                    ->where('createdAt', '>', $notificationReadAt)
+                                    ->count()
+                                : 0;
+                        } else {
+                            $notifications = collect();
+                            $unreadNotifications = 0;
+                        }
                     @endphp
                     <div class="relative">
                         <button type="button" onclick="toggleNotificationMenu()" aria-label="Buka notifikasi" aria-expanded="false" class="relative rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-slate-700">
