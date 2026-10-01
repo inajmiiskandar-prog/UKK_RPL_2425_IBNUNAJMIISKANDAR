@@ -135,6 +135,10 @@ class KpiDashboardController extends Controller
                 ->get();
         }
 
+        // Variabel untuk view
+        $isAdminOrHr = in_array($user->role, ['ADMIN', 'HR']);
+        $isAtasan = $user->role === 'ATASAN';
+
         return view('kpi.dashboard', compact(
             'totalKaryawan',
             'sudahDinilai',
@@ -146,7 +150,9 @@ class KpiDashboardController extends Controller
             'chartLabels',
             'chartScores',
             'percentageChange',
-            'recentResults'
+            'recentResults',
+            'isAdminOrHr',
+            'isAtasan'
         ));
     }
 }

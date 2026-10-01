@@ -99,7 +99,7 @@ class KpiEmployeeController extends Controller
             'alamat' => 'nullable|string|max:255',
             'telepon' => 'nullable|string|max:20',
             'tanggal_masuk' => 'nullable|date',
-            'role' => ['required', Rule::in(['ADMIN', 'ATASAN', 'HR', 'KARYAWAN'])],
+            'role' => ['required', Rule::in(['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'])],
             'password' => 'required|min:6',
         ], [
             'nama.required' => 'Nama wajib diisi!',
@@ -215,11 +215,9 @@ class KpiEmployeeController extends Controller
      */
     public function update(Request $request, User $employee)
     {
-        $allowedRoles = ['ADMIN', 'ATASAN', 'HR', 'KARYAWAN'];
-        $legacyRoles = ['LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'];
-        $roleOptions = in_array($employee->role, $legacyRoles, true)
-            ? [...$allowedRoles, $employee->role]
-            : $allowedRoles;
+        // 5 role PassOne: ADMIN, LEADER, SALES, TEKNISI, LOGISTIK
+        $allowedRoles = ['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'];
+        $roleOptions = $allowedRoles;
 
         $request->validate([
             'nik' => 'nullable|string|max:20|unique:users,nik,' . $employee->id_user . ',id_user',

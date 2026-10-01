@@ -70,7 +70,7 @@ class KpiEmployeeExportTest extends TestCase
     }
 
     /** @test */
-    public function leader_can_export_employee_data()
+    public function leader_cannot_export_employee_data()
     {
         $leader = User::factory()->create([
             'role' => 'LEADER',
@@ -92,8 +92,8 @@ class KpiEmployeeExportTest extends TestCase
 
         $response = $this->get(route('kpi.employee.export'));
 
-        $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'application/vnd.ms-excel');
+        // LEADER tidak memiliki akses export (hanya ADMIN)
+        $response->assertStatus(403);
     }
 
     /** @test */

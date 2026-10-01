@@ -68,16 +68,14 @@
                 {{-- Role --}}
                 <div>
                     <label for="role" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Role</label>
-                        <select name="role" id="role" {{ in_array($employee->role, ['LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'], true) ? 'disabled' : '' }}
+                    <select name="role" id="role"
                             class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
-                        <option value="KARYAWAN" {{ $employee->role == 'KARYAWAN' ? 'selected' : '' }}>Karyawan</option>
-                        <option value="ATASAN" {{ $employee->role == 'ATASAN' ? 'selected' : '' }}>Atasan</option>
-                        <option value="HR" {{ $employee->role == 'HR' ? 'selected' : '' }}>HR</option>
-                        <option value="ADMIN" {{ $employee->role == 'ADMIN' ? 'selected' : '' }}>Admin</option>
+                        <option value="ADMIN" {{ $employee->role == 'ADMIN' ? 'selected' : '' }}>Administrator</option>
+                        <option value="LEADER" {{ $employee->role == 'LEADER' ? 'selected' : '' }}>Leader</option>
+                        <option value="SALES" {{ $employee->role == 'SALES' ? 'selected' : '' }}>Sales</option>
+                        <option value="TEKNISI" {{ $employee->role == 'TEKNISI' ? 'selected' : '' }}>Teknisi</option>
+                        <option value="LOGISTIK" {{ $employee->role == 'LOGISTIK' ? 'selected' : '' }}>Logistik</option>
                     </select>
-                    @if(in_array($employee->role, ['LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'], true))
-                    <input type="hidden" name="role" value="{{ $employee->role }}">
-                    @endif
                 </div>
             </div>
 

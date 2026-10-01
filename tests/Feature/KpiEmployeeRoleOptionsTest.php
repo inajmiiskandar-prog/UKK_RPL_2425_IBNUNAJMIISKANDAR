@@ -22,7 +22,7 @@ class KpiEmployeeRoleOptionsTest extends TestCase
             ->get('/kpi/employee/create')
             ->assertOk()
             // 5 role baru PassOne
-            ->assertSee('Admin')
+            ->assertSee('Administrator')
             ->assertSee('Leader')
             ->assertSee('Sales')
             ->assertSee('Teknisi')
@@ -47,7 +47,7 @@ class KpiEmployeeRoleOptionsTest extends TestCase
             ->get('/kpi/employee/' . $employee->id_user . '/edit')
             ->assertOk()
             // 5 role baru PassOne
-            ->assertSee('Admin')
+            ->assertSee('Administrator')
             ->assertSee('Leader')
             ->assertSee('Sales')
             ->assertSee('Teknisi')

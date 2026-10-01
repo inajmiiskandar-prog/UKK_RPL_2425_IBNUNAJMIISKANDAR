@@ -121,10 +121,11 @@
                     <select name="role" id="role" required
                             class="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                         <option value="">-- Pilih Role --</option>
-                        <option value="KARYAWAN" {{ old('role') === 'KARYAWAN' ? 'selected' : '' }}>Karyawan</option>
-                        <option value="ATASAN" {{ old('role') === 'ATASAN' ? 'selected' : '' }}>Atasan</option>
-                        <option value="HR" {{ old('role') === 'HR' ? 'selected' : '' }}>HR</option>
-                        <option value="ADMIN" {{ old('role') === 'ADMIN' ? 'selected' : '' }}>Admin</option>
+                        <option value="ADMIN" {{ old('role') === 'ADMIN' ? 'selected' : '' }}>Administrator</option>
+                        <option value="LEADER" {{ old('role') === 'LEADER' ? 'selected' : '' }}>Leader</option>
+                        <option value="SALES" {{ old('role') === 'SALES' ? 'selected' : '' }}>Sales</option>
+                        <option value="TEKNISI" {{ old('role') === 'TEKNISI' ? 'selected' : '' }}>Teknisi</option>
+                        <option value="LOGISTIK" {{ old('role') === 'LOGISTIK' ? 'selected' : '' }}>Logistik</option>
                     </select>
                 </div>
 
