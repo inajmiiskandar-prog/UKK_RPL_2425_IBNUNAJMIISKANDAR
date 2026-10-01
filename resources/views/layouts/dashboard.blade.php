@@ -412,21 +412,32 @@
                         </svg>
                     </button>
 
-                    {{-- Notifications (hanya tampilkan aktivitas user yang login) --}}
+                    {{-- Notifications: ADMIN lihat semua, role lain hanya miliknya --}}
                     @php
                         $notificationReadAt = session('notifications_read_at');
                         if (Auth::check()) {
                             $currentUserId = Auth::user()->id_user;
-                            $notifications = App\Models\ActivityLog::with('user')
-                                ->where('id_user', $currentUserId)
-                                ->latest('createdAt')
-                                ->limit(5)
-                                ->get();
-                            $unreadNotifications = $notificationReadAt
-                                ? App\Models\ActivityLog::where('id_user', $currentUserId)
-                                    ->where('createdAt', '>', $notificationReadAt)
-                                    ->count()
-                                : 0;
+                            $isAdmin = Auth::user()->role === 'ADMIN';
+                            if ($isAdmin) {
+                                $notifications = App\Models\ActivityLog::with('user')
+                                    ->latest('createdAt')
+                                    ->limit(5)
+                                    ->get();
+                                $unreadNotifications = $notificationReadAt
+                                    ? App\Models\ActivityLog::where('createdAt', '>', $notificationReadAt)->count()
+                                    : App\Models\ActivityLog::count();
+                            } else {
+                                $notifications = App\Models\ActivityLog::with('user')
+                                    ->where('id_user', $currentUserId)
+                                    ->latest('createdAt')
+                                    ->limit(5)
+                                    ->get();
+                                $unreadNotifications = $notificationReadAt
+                                    ? App\Models\ActivityLog::where('id_user', $currentUserId)
+                                        ->where('createdAt', '>', $notificationReadAt)
+                                        ->count()
+                                    : App\Models\ActivityLog::where('id_user', $currentUserId)->count();
+                            }
                         } else {
                             $notifications = collect();
                             $unreadNotifications = 0;
