@@ -97,10 +97,16 @@ Route::middleware('auth')->group(function () {
     // KPI Routes - Semua role yang login bisa akses
     // ======================================================
 
-    // Master Data KPI: Soft Skill & Hard Skill (ADMIN only)
+    // Master Data KPI: Soft Skill (ADMIN only), Hard Skill (ADMIN & LEADER bisa create/update, ADMIN only untuk destroy)
     Route::middleware('role:ADMIN')->prefix('kpi')->name('kpi.')->group(function () {
         Route::resource('soft-skill', KpiSoftSkillController::class);
-        Route::resource('hard-skill', KpiHardSkillController::class);
+    });
+    // Hard Skill: ADMIN & LEADER bisa create/edit, ADMIN only untuk destroy
+    Route::middleware('role:ADMIN,LEADER')->prefix('kpi')->name('kpi.')->group(function () {
+        Route::resource('hard-skill', KpiHardSkillController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+    });
+    Route::middleware('role:ADMIN')->prefix('kpi')->name('kpi.')->group(function () {
+        Route::resource('hard-skill', KpiHardSkillController::class)->only(['destroy']);
     });
 
     // KPI Dashboard - semua role login bisa akses
@@ -111,7 +117,7 @@ Route::middleware('auth')->group(function () {
     // Data Karyawan - ADMIN bisa edit, semua bisa lihat
     Route::prefix('kpi')->name('kpi.')->group(function () {
         // Export harus sebelum resource route agar tidak tertangkap wildcard
-        Route::middleware('role:ADMIN,HR')->group(function () {
+        Route::middleware('role:ADMIN,LEADER')->group(function () {
             Route::get('employee/export', [KpiEmployeeController::class, 'export'])->name('employee.export');
         });
         Route::resource('employee', KpiEmployeeController::class)->only(['index', 'show', 'create', 'store']);

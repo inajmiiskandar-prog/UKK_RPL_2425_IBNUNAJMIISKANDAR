@@ -23,10 +23,10 @@ class KpiWizardPersistenceTest extends TestCase
      */
     private function prepareReview(): array
     {
-        $supervisor = User::factory()->create(['role' => 'ATASAN', 'status' => true]);
-        $employee = User::factory()->create([
-            'role' => 'KARYAWAN',
-            'atasan_id' => $supervisor->id_user,
+        $leader = User::factory()->create(['role' => 'LEADER', 'status' => true]);
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
+            'atasan_id' => $leader->id_user,
             'divisi' => 'IT',
             'jabatan' => 'programer',
             'status' => true,
@@ -42,8 +42,8 @@ class KpiWizardPersistenceTest extends TestCase
             'kpi' => 'Dokumentasi', 'divisi' => 'IT', 'jabatan' => 'programer', 'weight' => 66,
         ]);
 
-        $this->actingAs($employee)->get(route('kpi.assessment.self'));
-        $assessment = KpiAssessment::where('user_id', $employee->id_user)->firstOrFail();
+        $this->actingAs($teknisi)->get(route('kpi.assessment.self'));
+        $assessment = KpiAssessment::where('user_id', $teknisi->id_user)->firstOrFail();
 
         $this->post(route('kpi.assessment.self.store', $assessment), [
             'scores' => [
@@ -52,18 +52,18 @@ class KpiWizardPersistenceTest extends TestCase
             ],
         ])->assertRedirect(route('kpi.assessment.index'));
 
-        return compact('supervisor', 'employee', 'assessment', 'softSkill', 'hardSkillA', 'hardSkillB');
+        return compact('leader', 'teknisi', 'assessment', 'softSkill', 'hardSkillA', 'hardSkillB');
     }
 
     public function test_wizard_step1_without_assessment_id_redirects_to_self_assessment(): void
     {
         $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
-        $employee = User::factory()->create(['role' => 'KARYAWAN', 'status' => true]);
+        $teknisi = User::factory()->create(['role' => 'TEKNISI', 'status' => true]);
 
         $this->actingAs($admin)
             ->post(route('kpi.assessment.wizard.step1'), [
                 'period_value' => '2026-09',
-                'user_id' => $employee->id_user,
+                'user_id' => $teknisi->id_user,
             ])
             ->assertRedirect(route('kpi.assessment.self'));
     }
@@ -72,12 +72,12 @@ class KpiWizardPersistenceTest extends TestCase
     {
         $d = $this->prepareReview();
 
-        $response = $this->actingAs($d['supervisor'])
+        $response = $this->actingAs($d['leader'])
             ->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $d['assessment']->id]);
 
         $response->assertRedirect(route('kpi.assessment.wizard.step2'));
         $response->assertSessionHas('kpi_wizard.assessment_id', $d['assessment']->id);
-        $response->assertSessionHas('kpi_wizard.user_id', $d['employee']->id_user);
+        $response->assertSessionHas('kpi_wizard.user_id', $d['teknisi']->id_user);
 
         $this->get(route('kpi.assessment.wizard.step2'))->assertOk();
     }
@@ -86,7 +86,7 @@ class KpiWizardPersistenceTest extends TestCase
     {
         $d = $this->prepareReview();
 
-        $this->actingAs($d['supervisor'])
+        $this->actingAs($d['leader'])
             ->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $d['assessment']->id]);
 
         $this->post(route('kpi.assessment.wizard.step2.store'), [
@@ -105,7 +105,7 @@ class KpiWizardPersistenceTest extends TestCase
     {
         $d = $this->prepareReview();
 
-        $this->actingAs($d['supervisor'])
+        $this->actingAs($d['leader'])
             ->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $d['assessment']->id])
             ->assertRedirect(route('kpi.assessment.wizard.step2'));
 
@@ -131,7 +131,7 @@ class KpiWizardPersistenceTest extends TestCase
     {
         $d = $this->prepareReview();
 
-        $this->actingAs($d['supervisor'])
+        $this->actingAs($d['leader'])
             ->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $d['assessment']->id]);
         $this->post(route('kpi.assessment.wizard.step2.store'), ['scores' => [$d['softSkill']->id => 60]]);
         $this->post(route('kpi.assessment.wizard.step3.store'), ['skip' => '1']);
@@ -157,7 +157,7 @@ class KpiWizardPersistenceTest extends TestCase
     {
         $d = $this->prepareReview();
 
-        $this->actingAs($d['supervisor'])
+        $this->actingAs($d['leader'])
             ->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $d['assessment']->id]);
         $this->post(route('kpi.assessment.wizard.step2.store'), ['scores' => [$d['softSkill']->id => 60]]);
 
@@ -166,5 +166,133 @@ class KpiWizardPersistenceTest extends TestCase
             'scores' => [$d['hardSkillA']->id => 60, $d['hardSkillB']->id => 100],
         ]);
         $this->get(route('kpi.assessment.wizard.step4'))->assertOk();
+    }
+
+    // =====================================================
+    // NEW TESTS - Role-based access control
+    // =====================================================
+
+    /**
+     * Test: User yang BUKAN atasan langsung dan BUKAN ADMIN
+     * harus ditolak saat mencoba mereview assessment orang lain
+     */
+    public function test_non_atasan_cannot_review_other_user_assessment(): void
+    {
+        // Leader A dengan bawahan TEKNISI
+        $leaderA = User::factory()->create(['role' => 'LEADER', 'status' => true]);
+        $teknisiA = User::factory()->create([
+            'role' => 'TEKNISI',
+            'atasan_id' => $leaderA->id_user,
+            'status' => true,
+        ]);
+
+        // Leader B dengan bawahan TEKNISI lain
+        $leaderB = User::factory()->create([
+            'role' => 'LEADER',
+            'status' => true,
+        ]);
+        $teknisiB = User::factory()->create([
+            'role' => 'TEKNISI',
+            'atasan_id' => $leaderB->id_user,
+            'status' => true,
+        ]);
+
+        // TEKNISI A submit self-assessment
+        $softSkill = KpiSoftSkill::create(['kode' => 'SS-TEST', 'nama_indikator' => 'Test Skill']);
+        $this->actingAs($teknisiA)->get(route('kpi.assessment.self'));
+        $assessment = KpiAssessment::where('user_id', $teknisiA->id_user)->firstOrFail();
+        $this->post(route('kpi.assessment.self.store', $assessment), [
+            'scores' => ['soft_skill' => [$softSkill->id => 80]],
+        ]);
+
+        // Leader B mencoba mereview assessment TEKNISI A (bukan bawahannya) - HARUS DITOLAK
+        $this->actingAs($leaderB);
+        $response = $this->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $assessment->id]);
+        $response->assertStatus(403);
+
+        // TEKNISI B (juga bukan atasan langsung) juga HARUS DITOLAK
+        $this->actingAs($teknisiB);
+        $response = $this->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $assessment->id]);
+        $response->assertStatus(403);
+
+        // Leader A (atasan langsung) boleh mereview
+        $this->actingAs($leaderA);
+        $response = $this->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $assessment->id]);
+        $response->assertStatus(302); // Redirect, bukan 403
+    }
+
+    /**
+     * Test: User tanpa bawahan hanya melihat assessment dirinya sendiri
+     */
+    public function test_user_without_subordinates_sees_only_own_assessment(): void
+    {
+        $leader = User::factory()->create(['role' => 'LEADER', 'status' => true]);
+
+        // SALES tanpa bawahan
+        $sales = User::factory()->create([
+            'role' => 'SALES',
+            'atasan_id' => $leader->id_user,
+            'status' => true,
+        ]);
+
+        // TEKNISI bawahan leader
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
+            'atasan_id' => $leader->id_user,
+            'status' => true,
+        ]);
+
+        // Buat assessment untuk sales
+        $softSkill = KpiSoftSkill::create(['kode' => 'SS-SALES', 'nama_indikator' => 'Sales Skill']);
+        $this->actingAs($sales)->get(route('kpi.assessment.self'));
+        $salesAssessment = KpiAssessment::where('user_id', $sales->id_user)->firstOrFail();
+        $this->post(route('kpi.assessment.self.store', $salesAssessment), [
+            'scores' => ['soft_skill' => [$softSkill->id => 80]],
+        ]);
+
+        // Buat assessment untuk teknisi
+        $this->actingAs($teknisi)->get(route('kpi.assessment.self'));
+        $teknisiAssessment = KpiAssessment::where('user_id', $teknisi->id_user)->firstOrFail();
+        $this->post(route('kpi.assessment.self.store', $teknisiAssessment), [
+            'scores' => ['soft_skill' => [$softSkill->id => 70]],
+        ]);
+
+        // SALES melihat histori - harusnya hanya melihat assessment dirinya sendiri
+        $this->actingAs($sales);
+        $response = $this->get(route('kpi.assessment.history'));
+        $response->assertStatus(200);
+
+        // Histori sales harusnya ada di halaman
+        $response->assertSee($sales->nama);
+
+        // Nama teknisi tidak boleh muncul di histori sales
+        $response->assertDontSee($teknisi->nama);
+    }
+
+    /**
+     * Test: ADMIN bisa mereview assessment siapa saja
+     */
+    public function test_admin_can_review_any_assessment(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $leader = User::factory()->create(['role' => 'LEADER', 'status' => true]);
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
+            'atasan_id' => $leader->id_user,
+            'status' => true,
+        ]);
+
+        // TEKNISI submit self-assessment
+        $softSkill = KpiSoftSkill::create(['kode' => 'SS-ADMIN', 'nama_indikator' => 'Admin Test']);
+        $this->actingAs($teknisi)->get(route('kpi.assessment.self'));
+        $assessment = KpiAssessment::where('user_id', $teknisi->id_user)->firstOrFail();
+        $this->post(route('kpi.assessment.self.store', $assessment), [
+            'scores' => ['soft_skill' => [$softSkill->id => 80]],
+        ]);
+
+        // ADMIN boleh mereview assessment siapa saja
+        $this->actingAs($admin);
+        $response = $this->post(route('kpi.assessment.wizard.step1'), ['assessment_id' => $assessment->id]);
+        $response->assertStatus(302); // Redirect, bukan 403
     }
 }

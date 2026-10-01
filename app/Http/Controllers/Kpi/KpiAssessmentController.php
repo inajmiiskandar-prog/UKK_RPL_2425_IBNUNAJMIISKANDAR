@@ -38,12 +38,11 @@ class KpiAssessmentController extends Controller
         // Auto-create periode untuk bulan berjalan jika belum ada
         $activePeriod = $this->getOrCreateCurrentPeriod();
 
-        // Cek apakah user ini adalah atasan (punya bawahan)
-        $hasBawahan = in_array($user->role, ['ATASAN', 'ADMIN'], true)
-            && $user->bawahan()->whereHas('kpiAssessments', function ($query) use ($activePeriod) {
-                $query->where('kpi_period_id', $activePeriod->id)
-                    ->where('status', 'menunggu_review');
-            })->exists();
+        // Cek apakah user ini punya bawahan langsung (untuk show/hide tab review)
+        $hasBawahan = $user->bawahan()->whereHas('kpiAssessments', function ($query) use ($activePeriod) {
+            $query->where('kpi_period_id', $activePeriod->id)
+                ->where('status', 'menunggu_review');
+        })->exists();
 
         // Ambil daftar bawahan jika user adalah atasan
         $bawahans = [];
@@ -234,11 +233,10 @@ class KpiAssessmentController extends Controller
     {
         $user = auth()->user();
 
-        // Validasi: pastikan user ini adalah atasan dari assessment ini
-        $isAtasan = $assessment->atasan_id === $user->id_user
-                     || ($user->role === 'ATASAN' || $user->role === 'ADMIN');
+        // Validasi: ADMIN atau user yang id_user = assessment->atasan_id
+        $canReview = $user->role === 'ADMIN' || $assessment->atasan_id === $user->id_user;
 
-        if (!$isAtasan) {
+        if (!$canReview) {
             return redirect()->route('kpi.assessment.index')
                            ->with('error', 'Anda bukan atasan dari karyawan ini!');
         }
@@ -273,11 +271,10 @@ class KpiAssessmentController extends Controller
     {
         $user = auth()->user();
 
-        // Validasi akses
-        $isAtasan = $assessment->atasan_id === $user->id_user
-                     || ($user->role === 'ATASAN' || $user->role === 'ADMIN');
+        // Validasi: ADMIN atau user yang id_user = assessment->atasan_id
+        $canReview = $user->role === 'ADMIN' || $assessment->atasan_id === $user->id_user;
 
-        if (!$isAtasan) {
+        if (!$canReview) {
             abort(403, 'Anda tidak memiliki akses!');
         }
 
@@ -471,7 +468,8 @@ class KpiAssessmentController extends Controller
     private function authorizeAtasanReview(KpiAssessment $assessment): void
     {
         $user = auth()->user();
-        if ($user->role !== 'ADMIN' && !($user->role === 'ATASAN' && $assessment->atasan_id === $user->id_user)) {
+        // Akses review: ADMIN atau user yang id_user = assessment->atasan_id
+        if ($user->role !== 'ADMIN' && $user->id_user !== $assessment->atasan_id) {
             abort(403, 'Anda tidak memiliki akses review assessment ini!');
         }
     }
@@ -482,27 +480,24 @@ class KpiAssessmentController extends Controller
     private function legacyWizardStep1(Request $request)
     {
         $user = auth()->user();
-        $isAdmin = $user->role === 'ADMIN';
-        $isAtasan = $user->role === 'ATASAN';
 
-        // Ambil daftar karyawan
-        // Admin & Atasan bisa pilih bawahan, Karyawan biasa hanya bisa untuk diri sendiri
-        if ($isAdmin) {
+        // Admin bisa pilih semua karyawan, user lain hanya bawahan langsung + diri sendiri
+        if ($user->role === 'ADMIN') {
             $employees = User::where('status', true)->orderBy('nama')->get();
-        } elseif ($isAtasan) {
+        } else {
             // Ambil bawahan langsung
             $employees = $user->bawahan()->where('status', true)->orderBy('nama')->get();
             // Tambahkan diri sendiri
             $employees = $employees->push($user)->sortBy('nama')->values();
-        } else {
-            // Karyawan biasa hanya bisa menilai diri sendiri
-            $employees = collect([$user]);
         }
+
+        // Cek apakah user punya bawahan (lebih dari 1 pilihan karyawan)
+        $hasBawahan = $employees->count() > 1;
 
         // Ambil data session jika ada (langkah sebelumnya)
         $wizardData = session('kpi_wizard', []);
 
-        return view('kpi.assessment.wizard-step1', compact('employees', 'wizardData'));
+        return view('kpi.assessment.wizard-step1', compact('employees', 'wizardData', 'hasBawahan'));
     }
 
     /**

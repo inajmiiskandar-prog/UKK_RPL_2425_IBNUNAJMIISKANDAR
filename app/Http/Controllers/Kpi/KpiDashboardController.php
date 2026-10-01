@@ -5,9 +5,8 @@
  * Menampilkan ringkasan KPI: statistik, tren, dan hasil terbaru
  *
  * Hak akses:
- * - ADMIN & HR: melihat semua data
- * - ATASAN: melihat bawahannya saja
- * - Lainnya: melihat data dirinya sendiri
+ * - ADMIN: melihat semua data karyawan aktif (exclude ADMIN sendiri)
+ * - Role lain: dirinya sendiri + bawahan langsung
  */
 
 namespace App\Http\Controllers\Kpi;
@@ -26,8 +25,6 @@ class KpiDashboardController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
-        $isAdminOrHr = in_array($user->role, ['ADMIN', 'HR']);
-        $isAtasan = $user->role === 'ATASAN';
 
         // Ambil periode untuk filter
         $periods = KpiPeriod::orderByDesc('tanggal_mulai')->get();
@@ -40,19 +37,15 @@ class KpiDashboardController extends Controller
         // QUERY BERDASARKAN HAK AKSES
         // =====================================================
 
-        // Base query untuk user yang bisa dinilai
-        $baseUserQuery = User::query()->where('status', true);
-
-        if ($isAdminOrHr) {
-            // ADMIN & HR: semua karyawan aktif tanpa ADMIN
-            $baseUserQuery->where('role', '!=', 'ADMIN');
-            $userScope = $baseUserQuery;
-        } elseif ($isAtasan) {
-            // ATASAN: hanya bawahannya
-            $userScope = User::where('atasan_id', $user->id_user)->where('status', true);
+        if ($user->role === 'ADMIN') {
+            // ADMIN: semua user aktif, exclude ADMIN sendiri dari hitungan
+            $userScope = User::where('status', true)->where('role', '!=', 'ADMIN');
+            $allUserIds = User::where('status', true)->pluck('id_user'); // Untuk chart/rekap
         } else {
-            // Lainnya: hanya diri sendiri
-            $userScope = User::where('id_user', $user->id_user);
+            // Role lain: diri sendiri + bawahan langsung
+            $bawahanIds = $user->bawahan()->where('status', true)->pluck('id_user');
+            $userScope = User::whereIn('id_user', $bawahanIds->push($user->id_user));
+            $allUserIds = $userScope->pluck('id_user');
         }
 
         // =====================================================
@@ -153,9 +146,7 @@ class KpiDashboardController extends Controller
             'chartLabels',
             'chartScores',
             'percentageChange',
-            'recentResults',
-            'isAdminOrHr',
-            'isAtasan'
+            'recentResults'
         ));
     }
 }

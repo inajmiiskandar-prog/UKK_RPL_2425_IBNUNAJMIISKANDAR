@@ -42,64 +42,57 @@ class KpiDashboardTest extends TestCase
             'status' => true,
         ]);
 
-        // Buat HR
-        $hr = User::factory()->create([
-            'role' => 'HR',
+        // Buat LEADER (bawahan admin)
+        $leader = User::factory()->create([
+            'role' => 'LEADER',
             'status' => true,
             'atasan_id' => $admin->id_user,
         ]);
 
-        // Buat karyawan (bawahan HR)
-        $employee = User::factory()->create([
-            'role' => 'KARYAWAN',
+        // Buat TEKNISI (bawahan leader)
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
             'status' => true,
-            'atasan_id' => $hr->id_user,
+            'atasan_id' => $leader->id_user,
         ]);
 
-        // Buat atasan bawahan admin
-        $atasan = User::factory()->create([
-            'role' => 'ATASAN',
+        // Buat SALES
+        $sales = User::factory()->create([
+            'role' => 'SALES',
             'status' => true,
-            'atasan_id' => $admin->id_user,
+            'atasan_id' => $leader->id_user,
         ]);
 
-        // Buat bawahan atasan
-        $bawahan1 = User::factory()->create([
-            'role' => 'KARYAWAN',
+        // Buat LOGISTIK
+        $logistik = User::factory()->create([
+            'role' => 'LOGISTIK',
             'status' => true,
-            'atasan_id' => $atasan->id_user,
-            'nama' => 'Bawahan Satu',
-        ]);
-        $bawahan2 = User::factory()->create([
-            'role' => 'KARYAWAN',
-            'status' => true,
-            'atasan_id' => $atasan->id_user,
-            'nama' => 'Bawahan Dua',
+            'atasan_id' => $leader->id_user,
         ]);
 
-        // Buat assessment untuk bawahan (sudah_dicek)
+        // Buat assessment untuk TEKNISI (sudah_dicek)
         KpiAssessment::create([
-            'user_id' => $bawahan1->id_user,
+            'user_id' => $teknisi->id_user,
             'kpi_period_id' => $this->period->id,
-            'atasan_id' => $atasan->id_user,
+            'atasan_id' => $leader->id_user,
             'status' => 'sudah_dicek',
             'skor_akhir' => 85.5,
         ]);
 
-        // Buat assessment waiting review
+        // Buat assessment menunggu review
         KpiAssessment::create([
-            'user_id' => $bawahan2->id_user,
+            'user_id' => $sales->id_user,
             'kpi_period_id' => $this->period->id,
-            'atasan_id' => $atasan->id_user,
+            'atasan_id' => $leader->id_user,
             'status' => 'menunggu_review',
             'skor_akhir' => null,
         ]);
 
         // Assessment periode sebelumnya
         KpiAssessment::create([
-            'user_id' => $bawahan1->id_user,
+            'user_id' => $teknisi->id_user,
             'kpi_period_id' => $this->prevPeriod->id,
-            'atasan_id' => $atasan->id_user,
+            'atasan_id' => $leader->id_user,
             'status' => 'sudah_dicek',
             'skor_akhir' => 80.0,
         ]);
@@ -110,11 +103,10 @@ class KpiDashboardTest extends TestCase
 
         $response->assertStatus(200);
 
-        // Admin melihat semua karyawan aktif tanpa ADMIN = HR + ATASAN + KARYAWAN + bawahan (5 user)
-        // Tapi yang dihitung berdasarkan scope query: semua aktif tanpa ADMIN = 5
+        // Admin melihat semua karyawan aktif tanpa ADMIN = LEADER + TEKNISI + SALES + LOGISTIK = 4 user
         $response->assertSeeText('Total Karyawan');
 
-        // Sudah dinilai = 1 (bawahan1)
+        // Sudah dinilai = 1 (TEKNISI)
         $response->assertSeeText('Sudah Dinilai');
 
         // Rata-rata KPI
@@ -122,187 +114,144 @@ class KpiDashboardTest extends TestCase
     }
 
     /** @test */
-    public function hr_can_view_kpi_dashboard_and_see_all_data()
+    public function leader_can_view_kpi_dashboard_and_see_subordinate_data()
     {
         $admin = User::factory()->create([
             'role' => 'ADMIN',
             'status' => true,
         ]);
 
-        $hr = User::factory()->create([
-            'role' => 'HR',
+        $leader = User::factory()->create([
+            'role' => 'LEADER',
             'status' => true,
             'atasan_id' => $admin->id_user,
         ]);
 
-        $employee = User::factory()->create([
-            'role' => 'KARYAWAN',
+        // TEKNISI bawahan leader
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
             'status' => true,
-            'atasan_id' => $hr->id_user,
-        ]);
-
-        $atasan = User::factory()->create([
-            'role' => 'ATASAN',
-            'status' => true,
-            'atasan_id' => $admin->id_user,
+            'atasan_id' => $leader->id_user,
         ]);
 
         // Assessment selesai
         KpiAssessment::create([
-            'user_id' => $employee->id_user,
+            'user_id' => $teknisi->id_user,
             'kpi_period_id' => $this->period->id,
-            'atasan_id' => $hr->id_user,
+            'atasan_id' => $leader->id_user,
             'status' => 'sudah_dicek',
             'skor_akhir' => 90.0,
         ]);
 
-        $this->actingAs($hr);
+        $this->actingAs($leader);
 
         $response = $this->get(route('kpi.dashboard', ['period_id' => $this->period->id]));
 
         $response->assertStatus(200);
         $response->assertSeeText('Dashboard KPI');
 
-        // HR melihat semua (tanpa ADMIN): ATASAN + KARYAWAN = 2
+        // LEADER melihat dirinya sendiri + bawahan = 2
         $response->assertSeeText('Total Karyawan');
     }
 
     /** @test */
     public function regular_employee_can_only_see_own_data()
     {
-        $admin = User::factory()->create([
-            'role' => 'ADMIN',
+        $leader = User::factory()->create([
+            'role' => 'LEADER',
             'status' => true,
         ]);
 
-        $atasan = User::factory()->create([
-            'role' => 'ATASAN',
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
             'status' => true,
-            'atasan_id' => $admin->id_user,
+            'atasan_id' => $leader->id_user,
         ]);
 
-        $employee = User::factory()->create([
-            'role' => 'KARYAWAN',
+        // TEKNISI lain (bawahan leader yang sama)
+        $otherTeknisi = User::factory()->create([
+            'role' => 'TEKNISI',
             'status' => true,
-            'atasan_id' => $atasan->id_user,
+            'atasan_id' => $leader->id_user,
+            'nama' => 'Other Teknisi',
         ]);
 
-        // Karyawan lain
-        $otherEmployee = User::factory()->create([
-            'role' => 'KARYAWAN',
-            'status' => true,
-            'atasan_id' => $atasan->id_user,
-            'nama' => 'Other Employee',
-        ]);
-
-        // Assessment untuk employee
+        // Assessment untuk teknisi
         KpiAssessment::create([
-            'user_id' => $employee->id_user,
+            'user_id' => $teknisi->id_user,
             'kpi_period_id' => $this->period->id,
-            'atasan_id' => $atasan->id_user,
+            'atasan_id' => $leader->id_user,
             'status' => 'sudah_dicek',
             'skor_akhir' => 75.0,
         ]);
 
-        // Assessment untuk other employee
+        // Assessment untuk other teknisi
         KpiAssessment::create([
-            'user_id' => $otherEmployee->id_user,
+            'user_id' => $otherTeknisi->id_user,
             'kpi_period_id' => $this->period->id,
-            'atasan_id' => $atasan->id_user,
+            'atasan_id' => $leader->id_user,
             'status' => 'sudah_dicek',
             'skor_akhir' => 88.0,
         ]);
 
-        $this->actingAs($employee);
+        $this->actingAs($teknisi);
 
         $response = $this->get(route('kpi.dashboard', ['period_id' => $this->period->id]));
 
         $response->assertStatus(200);
 
-        // Karyawan reguler hanya melihat dirinya sendiri = 1
+        // TEKNISI reguler hanya melihat dirinya sendiri = 1
         $response->assertSeeText('Total Karyawan');
 
-        // Tidak melihat data employee lain
-        $response->assertDontSee('Other Employee');
+        // Tidak melihat data teknisi lain
+        $response->assertDontSee('Other Teknisi');
 
         // Melihat skor dirinya sendiri
         $response->assertSee('75.0');
     }
 
     /** @test */
-    public function atasan_can_only_see_subordinate_data()
+    public function user_without_subordinates_only_sees_own_data()
     {
-        $admin = User::factory()->create([
-            'role' => 'ADMIN',
+        $leader = User::factory()->create([
+            'role' => 'LEADER',
             'status' => true,
         ]);
 
-        $atasan = User::factory()->create([
-            'role' => 'ATASAN',
+        // SALES tanpa bawahan
+        $sales = User::factory()->create([
+            'role' => 'SALES',
             'status' => true,
-            'atasan_id' => $admin->id_user,
-            'nama' => 'Atasan Utama', // Nama spesifik untuk menghindari conflict
+            'atasan_id' => $leader->id_user,
         ]);
 
-        // Bawahannya
-        $bawahan1 = User::factory()->create([
-            'role' => 'KARYAWAN',
+        // TEKNISI bawahan leader
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
             'status' => true,
-            'atasan_id' => $atasan->id_user,
-            'nama' => 'Bawahan Satu',
-        ]);
-        $bawahan2 = User::factory()->create([
-            'role' => 'KARYAWAN',
-            'status' => true,
-            'atasan_id' => $atasan->id_user,
-            'nama' => 'Bawahan Dua',
+            'atasan_id' => $leader->id_user,
+            'nama' => 'Bawahan Leader',
         ]);
 
-        // Karyawan di luar atasan (langsung di bawah admin)
-        $otherEmployee = User::factory()->create([
-            'role' => 'KARYAWAN',
-            'status' => true,
-            'atasan_id' => $admin->id_user,
-            'nama' => 'Bukan Bawahan Atasan',
-        ]);
-
-        // Assessment bawahan 1 - selesai
+        // Assessment untuk teknisi (skor unik 99.9 untuk deteksi)
         KpiAssessment::create([
-            'user_id' => $bawahan1->id_user,
+            'user_id' => $teknisi->id_user,
             'kpi_period_id' => $this->period->id,
-            'atasan_id' => $atasan->id_user,
-            'status' => 'sudah_dicek',
-            'skor_akhir' => 85.0,
-        ]);
-
-        // Assessment bawahan 2 - menunggu review
-        KpiAssessment::create([
-            'user_id' => $bawahan2->id_user,
-            'kpi_period_id' => $this->period->id,
-            'atasan_id' => $atasan->id_user,
-            'status' => 'menunggu_review',
-            'skor_akhir' => null,
-        ]);
-
-        // Assessment bukan bawahan (skor unik 99.9 untuk deteksi)
-        KpiAssessment::create([
-            'user_id' => $otherEmployee->id_user,
-            'kpi_period_id' => $this->period->id,
-            'atasan_id' => $admin->id_user,
+            'atasan_id' => $leader->id_user,
             'status' => 'sudah_dicek',
             'skor_akhir' => 99.9,
         ]);
 
-        $this->actingAs($atasan);
+        $this->actingAs($sales);
 
         $response = $this->get(route('kpi.dashboard', ['period_id' => $this->period->id]));
 
         $response->assertStatus(200);
 
-        // Melihat bawahannya (skor mereka)
-        $response->assertSee('85.0');
+        // SALES hanya melihat dirinya sendiri = 1
+        $response->assertSeeText('Total Karyawan');
 
-        // Tidak melihat skor bukan bawahan
+        // Tidak melihat skor bawahan leader lain
         $response->assertDontSee('99.9');
     }
 

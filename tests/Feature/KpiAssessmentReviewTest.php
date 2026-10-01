@@ -16,11 +16,11 @@ class KpiAssessmentReviewTest extends TestCase
     public function test_self_submission_waits_for_supervisor_and_review_calculates_final_score(): void
     {
         $supervisor = User::factory()->create([
-            'role' => 'ATASAN',
+            'role' => 'LEADER',
             'status' => true,
         ]);
         $employee = User::factory()->create([
-            'role' => 'KARYAWAN',
+            'role' => 'TEKNISI',
             'atasan_id' => $supervisor->id_user,
             'status' => true,
         ]);
@@ -103,9 +103,9 @@ class KpiAssessmentReviewTest extends TestCase
 
     public function test_review_calculates_weighted_hard_skill_from_combined_indicator_scores(): void
     {
-        $supervisor = User::factory()->create(['role' => 'ATASAN', 'status' => true]);
+        $supervisor = User::factory()->create(['role' => 'LEADER', 'status' => true]);
         $employee = User::factory()->create([
-            'role' => 'KARYAWAN',
+            'role' => 'TEKNISI',
             'atasan_id' => $supervisor->id_user,
             'divisi' => 'IT',
             'jabatan' => 'programer',

@@ -101,7 +101,7 @@
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                 @enderror
                 <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    @if(in_array(auth()->user()->role, ['ADMIN', 'ATASAN']))
+                    @if($hasBawahan)
                     Anda dapat memilih bawahan atau menilai diri sendiri.
                     @else
                     Anda hanya dapat menilai diri sendiri.
