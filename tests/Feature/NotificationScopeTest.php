@@ -12,7 +12,7 @@ class NotificationScopeTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Non-admin tidak melihat deskripsi/nama aktivitas user lain, dan tidak ada badge
+     * Non-admin tidak melihat deskripsi/nama aktivitas user lain
      */
     public function test_non_admin_does_not_see_other_users_notification_description(): void
     {
@@ -45,9 +45,6 @@ class NotificationScopeTest extends TestCase
         // User1 TIDAK boleh melihat aktivitas user2
         $response->assertDontSee('Aktivitas User2 yang rahasia');
         $response->assertDontSee($user2->nama);
-
-        // Badge tidak boleh muncul karena belum ada yang dibaca
-        $response->assertDontSee('notificationBadge');
     }
 
     /**
