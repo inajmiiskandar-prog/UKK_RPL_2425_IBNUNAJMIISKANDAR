@@ -262,10 +262,13 @@ class KpiWizardPersistenceTest extends TestCase
         $response = $this->get(route('kpi.assessment.history'));
         $response->assertStatus(200);
 
-        // Histori sales harusnya ada di halaman
-        $response->assertSee($sales->nama);
+        // Verifikasi via viewData: hanya 1 assessment dan miliknya sales
+        $response->assertViewHas('assessments');
+        $viewAssessments = $response->viewData('assessments');
+        $this->assertCount(1, $viewAssessments);
+        $this->assertEquals($sales->id_user, $viewAssessments->first()->user_id);
 
-        // Nama teknisi tidak boleh muncul di histori sales
+        // Nama teknisi tidak boleh muncul di histori sales (notifikasi atau konten)
         $response->assertDontSee($teknisi->nama);
     }
 
