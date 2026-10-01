@@ -103,7 +103,7 @@ Route::middleware('auth')->group(function () {
     });
     // Hard Skill: ADMIN & LEADER bisa create/edit, ADMIN only untuk destroy
     Route::middleware('role:ADMIN,LEADER')->prefix('kpi')->name('kpi.')->group(function () {
-        Route::resource('hard-skill', KpiHardSkillController::class)->only(['index', 'create', 'store', 'edit', 'update']);
+        Route::resource('hard-skill', KpiHardSkillController::class)->only(['index', 'create', 'store', 'edit', 'update', 'show']);
     });
     Route::middleware('role:ADMIN')->prefix('kpi')->name('kpi.')->group(function () {
         Route::resource('hard-skill', KpiHardSkillController::class)->only(['destroy']);
