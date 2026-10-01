@@ -52,7 +52,7 @@ class KodeGenerator
         // Ambil semua kode yang ada
         $existingKodes = \DB::table($table)
             ->whereNotNull($kodeColumn)
-            ->whereRaw("LEFT({$kodeColumn}, ?) = ?", [strlen($prefix), $prefix])
+            ->where($kodeColumn, 'like', $prefix . '%')
             ->pluck($kodeColumn)
             ->map(fn($kode) => self::extractNumber($kode, $prefix))
             ->filter() // Remove null values (parsing gagal)
