@@ -73,11 +73,6 @@ class KpiEmployeeRoleOptionsTest extends TestCase
 
     /**
      * Test ini memverifikasi bahwa 5 role baru PassOne bisa disimpan.
-     *
-     * Catatan: Test ini mungkin GAGAL di SQLite karena masalah dengan
-     * fungsi LEFT() di KodeGenerator yang tidak didukung penuh oleh SQLite.
-     * Ini adalah masalah lama yang SUDAH DIKETAHUI - tidak diperbaiki sekarang.
-     * Jika gagal karena alasan itu, test tetap dianggap memenuhi tujuan.
      */
     public function test_kpi_employee_can_store_each_allowed_role(): void
     {
