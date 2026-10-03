@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\KodeGenerator;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -66,8 +67,14 @@ class UserController extends Controller
             'jkl' => 'required|in:LAKI_LAKI,PEREMPUAN',
             'role' => 'required|in:ADMIN,LEADER,SALES,TEKNISI,LOGISTIK',
             'no_hp' => 'nullable|string|max:20',
+            'telepon' => 'nullable|string|max:20',
             'email' => 'nullable|email|unique:users,email',
             'status' => 'required|in:0,1',
+            'nik' => 'nullable|string|max:50',
+            'divisi' => 'nullable|string|max:100',
+            'jabatan' => 'nullable|string|max:100',
+            'alamat' => 'nullable|string|max:500',
+            'tanggal_masuk' => 'nullable|date',
         ], [
             'nama.required' => 'Nama wajib diisi!',
             'username.required' => 'Username wajib diisi!',
@@ -82,27 +89,36 @@ class UserController extends Controller
         try {
             DB::beginTransaction();
 
-            // Generate kode_user
-            $lastUser = User::orderBy('id_user', 'desc')->first();
-            $lastNumber = $lastUser ? (int) substr($lastUser->kode_user, 3) : 0;
-            $kodeUser = 'USR' . str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+            $kodeUser = KodeGenerator::generateWithGapFilling('users', 'kode_user', 'USR', 3);
+            $kodeKaryawan = KodeGenerator::generateWithGapFilling('users', 'kode_karyawan', 'EMP', 3);
 
             $fotoPath = null;
             if ($request->hasFile('foto')) {
                 $fotoPath = $request->file('foto')->store('user-photos', 'public');
             }
 
+            $telepon = $request->telepon ?: $request->no_hp;
+            $email = $request->email ?: $request->username . '@passnet.local';
+
             User::create([
                 'kode_user' => $kodeUser,
+                'kode_karyawan' => $kodeKaryawan,
                 'nama' => $request->nama,
                 'username' => $request->username,
                 'password' => Hash::make($request->password),
                 'jkl' => $request->jkl,
                 'role' => $request->role,
                 'foto' => $fotoPath,
-                'no_hp' => $request->no_hp,
-                'email' => $request->email,
+                'no_hp' => $telepon,
+                'no_telp' => $telepon,
+                'email' => $email,
                 'status' => $request->status,
+                'nik' => $request->nik,
+                'divisi' => $request->divisi,
+                'jabatan' => $request->jabatan,
+                'alamat' => $request->alamat,
+                'tanggal_masuk' => $request->tanggal_masuk,
+                'join_date' => $request->tanggal_masuk,
             ]);
 
             \App\Models\ActivityLog::log('USER_CREATED', "Menambah User: {$request->nama}", auth()->id());
