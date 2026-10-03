@@ -70,7 +70,7 @@ class UserController extends Controller
             'telepon' => 'nullable|string|max:20',
             'email' => 'nullable|email|unique:users,email',
             'status' => 'required|in:0,1',
-            'nik' => 'nullable|string|max:50',
+            'nik' => 'nullable|string|max:20',
             'divisi' => 'nullable|string|max:100',
             'jabatan' => 'nullable|string|max:100',
             'alamat' => 'nullable|string|max:500',
