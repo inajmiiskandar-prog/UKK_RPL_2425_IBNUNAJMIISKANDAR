@@ -290,15 +290,23 @@
 
                 </div>
 
-                {{-- ========================================== --}}
-                {{-- KPI SECTION - SATU GRUP                     --}}
-                {{-- ========================================== --}}
+                @php
+                    // Keep sidebar visibility aligned with the KPI route middleware.
+                    $kpiRole = auth()->user()?->role;
+                    $canViewKpiAssessment = auth()->check();
+                    $canViewSoftSkill = $kpiRole === 'ADMIN';
+                    $canViewHardSkill = in_array($kpiRole, ['ADMIN', 'LEADER'], true);
+                    $canViewKpiExport = $kpiRole === 'ADMIN';
+                @endphp
+
+                @if($canViewKpiAssessment || $canViewSoftSkill || $canViewHardSkill || $canViewKpiExport)
                 <div class="mt-6 mb-2 px-4">
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">KPI</p>
                 </div>
 
                 <div class="space-y-1">
                     {{-- Master Data KPI --}}
+                    @if($canViewSoftSkill)
                     <a href="{{ route('kpi.soft-skill.index') }}"
                        class="menu-item {{ request()->routeIs('kpi.soft-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -306,7 +314,9 @@
                         </svg>
                         <span>Soft Skill</span>
                     </a>
+                    @endif
 
+                    @if($canViewHardSkill)
                     <a href="{{ route('kpi.hard-skill.index') }}"
                        class="menu-item {{ request()->routeIs('kpi.hard-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -314,7 +324,9 @@
                         </svg>
                         <span>Hard Skill</span>
                     </a>
+                    @endif
 
+                    @if($canViewKpiAssessment)
                     <a href="{{ route('kpi.assessment.index') }}"
                        class="menu-item {{ request()->routeIs('kpi.assessment.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -330,7 +342,9 @@
                         </svg>
                         <span>Histori KPI</span>
                     </a>
+                    @endif
 
+                    @if($canViewKpiExport)
                     <a href="{{ route('kpi.report.index') }}"
                        class="menu-item {{ request()->routeIs('kpi.report.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -338,7 +352,9 @@
                         </svg>
                         <span>Export Data</span>
                     </a>
+                    @endif
                 </div>
+                @endif
 
                 {{-- Pengaturan Section (Paling Bawah) --}}
                 <div class="mt-6 mb-2 px-4">
