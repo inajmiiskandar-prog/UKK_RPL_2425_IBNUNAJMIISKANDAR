@@ -79,17 +79,8 @@ class KpiAssessment extends Model
                     ->where('penilai_type', 'atasan');
     }
 
-    /**
-     * Hitung dan update skor akhir
-     *
-     * Logika perhitungan:
-     * - Soft Skill: Simple average (tanpa weight)
-     * - Hard Skill: Weighted average (berdasarkan field weight di KpiHardSkill)
-     * - Skor akhir: Average dari (avg_soft_skill + avg_hard_skill) / 2
-     *
-     * Handle division by zero untuk weighted average hard skill
-     */
-    public function calculateFinalScore(): void
+    /** Hitung skor soft skill dan hard skill secara terpisah. */
+    public function calculateSkillScores(): array
     {
         $selfScores = $this->selfScores()->with('skill')->get()->keyBy(fn ($score) => $score->skill_type . ':' . $score->skill_id);
         $atasanScores = $this->atasanScores()->with('skill')->get()->keyBy(fn ($score) => $score->skill_type . ':' . $score->skill_id);
@@ -120,6 +111,28 @@ class KpiAssessment extends Model
         // Weight NULL/tidak ada akan di-exclude dari perhitungan
         $avgHardSkill = $this->calculateWeightedAverageHardSkill($hardScores);
 
+        return [
+            'soft_skill' => $avgSoftSkill,
+            'hard_skill' => $avgHardSkill,
+        ];
+    }
+
+    /**
+     * Hitung dan update skor akhir
+     *
+     * Logika perhitungan:
+     * - Soft Skill: Simple average (tanpa weight)
+     * - Hard Skill: Weighted average (berdasarkan field weight di KpiHardSkill)
+     * - Skor akhir: Average dari (avg_soft_skill + avg_hard_skill) / 2
+     *
+     * Handle division by zero untuk weighted average hard skill
+     */
+    public function calculateFinalScore(): void
+    {
+        $skillScores = $this->calculateSkillScores();
+        $avgSoftSkill = $skillScores['soft_skill'];
+        $avgHardSkill = $skillScores['hard_skill'];
+
         // Hitung skor akhir: average dari soft & hard skill
         if ($avgSoftSkill !== null && $avgHardSkill !== null) {
             // Average dari soft skill dan hard skill
@@ -140,6 +153,23 @@ class KpiAssessment extends Model
         } else {
             $this->update(['skor_akhir' => null]);
         }
+    }
+
+    public function grade(): string
+    {
+        if ($this->skor_akhir === null) {
+            return '-';
+        }
+
+        $score = (float) $this->skor_akhir;
+
+        return match (true) {
+            $score >= 90 => 'A',
+            $score >= 75 => 'B',
+            $score >= 60 => 'C',
+            $score >= 45 => 'D',
+            default => 'E',
+        };
     }
 
     /**
