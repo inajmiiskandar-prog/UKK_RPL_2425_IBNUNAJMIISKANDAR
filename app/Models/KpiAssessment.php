@@ -82,8 +82,20 @@ class KpiAssessment extends Model
     /** Hitung skor soft skill dan hard skill secara terpisah. */
     public function calculateSkillScores(): array
     {
-        $selfScores = $this->selfScores()->with('skill')->get()->keyBy(fn ($score) => $score->skill_type . ':' . $score->skill_id);
-        $atasanScores = $this->atasanScores()->with('skill')->get()->keyBy(fn ($score) => $score->skill_type . ':' . $score->skill_id);
+        if ($this->relationLoaded('scores')) {
+            foreach (['soft_skill', 'hard_skill'] as $skillType) {
+                $this->scores->where('skill_type', $skillType)->loadMissing('skill');
+            }
+
+            $selfScores = $this->scores->where('penilai_type', 'karyawan');
+            $atasanScores = $this->scores->where('penilai_type', 'atasan');
+        } else {
+            $selfScores = $this->selfScores()->with('skill')->get();
+            $atasanScores = $this->atasanScores()->with('skill')->get();
+        }
+
+        $selfScores = $selfScores->keyBy(fn ($score) => $score->skill_type . ':' . $score->skill_id);
+        $atasanScores = $atasanScores->keyBy(fn ($score) => $score->skill_type . ':' . $score->skill_id);
         $softScores = collect();
         $hardScores = collect();
 

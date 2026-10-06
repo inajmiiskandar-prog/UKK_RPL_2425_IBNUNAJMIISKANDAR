@@ -373,13 +373,27 @@ class KpiAssessmentController extends Controller
 
         // Ambil semua assessment user ini
         $query = KpiAssessment::where('user_id', $targetUserId)
-                              ->with(['scores', 'period']);
+                      ->with(['user', 'period', 'atasan', 'scores']);
 
         if ($selectedPeriodId) {
             $query->where('kpi_period_id', $selectedPeriodId);
         }
 
         $assessments = $query->orderByDesc('created_at')->get();
+
+        $scoreRecords = $assessments->flatMap(fn (KpiAssessment $assessment) => $assessment->scores);
+        foreach (['soft_skill', 'hard_skill'] as $skillType) {
+            $scoresForType = new \Illuminate\Database\Eloquent\Collection(
+                $scoreRecords->where('skill_type', $skillType)->values()->all()
+            );
+            $scoresForType->load('skill');
+        }
+
+        $assessments->each(function (KpiAssessment $assessment) {
+            $skillScores = $assessment->calculateSkillScores();
+            $assessment->setAttribute('history_soft_skill_score', $skillScores['soft_skill']);
+            $assessment->setAttribute('history_hard_skill_score', $skillScores['hard_skill']);
+        });
 
         // Selected period object untuk dropdown
         $selectedPeriod = $selectedPeriodId ? $periods->find($selectedPeriodId) : null;
