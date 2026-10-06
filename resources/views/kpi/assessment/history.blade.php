@@ -61,67 +61,86 @@
 {{-- Histori Table --}}
 <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
+        <table class="min-w-[1100px] w-full text-left text-sm">
             <thead class="border-b border-gray-100 bg-gray-50 dark:border-slate-700 dark:bg-slate-700/50">
                 <tr>
-                    <th class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">#</th>
-                    <th class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">Periode</th>
-                    <th class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">Tanggal</th>
-                    <th class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">Status</th>
-                    <th class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">Skor Self</th>
-                    <th class="px-6 py-4 font-semibold text-gray-600 dark:text-gray-300">Skor Atasan</th>
-                    <th class="px-6 py-4 text-right font-semibold text-gray-600 dark:text-gray-300">Skor Akhir</th>
+                    <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">#</th>
+                    <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Periode</th>
+                    <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Tanggal Dibuat</th>
+                    <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Status</th>
+                    <th class="whitespace-nowrap px-3 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Skor Soft Skill</th>
+                    <th class="whitespace-nowrap px-3 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Skor Hard Skill</th>
+                    <th class="whitespace-nowrap px-3 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Skor Akhir</th>
+                    <th class="whitespace-nowrap px-3 py-3 text-center font-semibold text-gray-600 dark:text-gray-300">Grade</th>
+                    <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Nama Atasan</th>
+                    <th class="whitespace-nowrap px-3 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Detail</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-50 dark:divide-slate-700">
                 @forelse($assessments as $a)
-                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700">
-                    <td class="px-6 py-4 text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
-                    <td class="px-6 py-4 font-medium text-gray-800 dark:text-white">{{ $a->period->nama ?? '-' }}</td>
-                    <td class="px-6 py-4 text-gray-500 dark:text-gray-400">
-                        {{ $a->period ? $a->period->tanggal_mulai->format('d/m/Y') . ' - ' . $a->period->tanggal_selesai->format('d/m/Y') : '-' }}
-                    </td>
-                    <td class="px-6 py-4">
-                        @php
-                            $sClass = match($a->status) {
-                                'pending' => 'bg-gray-100 text-gray-700',
-                                'self_done' => 'bg-yellow-100 text-yellow-700',
-                                'atasan_done' => 'bg-orange-100 text-orange-700',
-                                'selesai' => 'bg-green-100 text-green-700',
-                                'menunggu_review' => 'bg-yellow-100 text-yellow-700',
-                                'sudah_dicek' => 'bg-green-100 text-green-700',
-                                default => 'bg-gray-100 text-gray-700',
-                            };
-                            $sLabel = match($a->status) {
-                                'pending' => 'Pending',
-                                'self_done' => 'Self Selesai',
-                                'atasan_done' => 'Atasan Selesai',
-                                'selesai' => 'Selesai',
-                                'menunggu_review' => 'Menunggu review atasan',
-                                'sudah_dicek' => 'Sudah selesai dinilai',
-                                default => $a->status,
-                            };
-                        @endphp
+                @php
+                    $detailUrl = route('kpi.assessment.show', $a->id);
+                    $sClass = match($a->status) {
+                        'pending' => 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300',
+                        'self_done' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+                        'atasan_done' => 'bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300',
+                        'selesai' => 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+                        'menunggu_review' => 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300',
+                        'sudah_dicek' => 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
+                        default => 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300',
+                    };
+                    $sLabel = match($a->status) {
+                        'pending' => 'Pending',
+                        'self_done' => 'Self Selesai',
+                        'atasan_done' => 'Atasan Selesai',
+                        'selesai' => 'Selesai',
+                        'menunggu_review' => 'Menunggu review atasan',
+                        'sudah_dicek' => 'Sudah selesai dinilai',
+                        default => $a->status,
+                    };
+                    $gradeClass = match($a->grade()) {
+                        'A' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+                        'B' => 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300',
+                        'C' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300',
+                        'D' => 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300',
+                        'E' => 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+                        default => 'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300',
+                    };
+                @endphp
+                <tr ondblclick="window.location.href='{{ $detailUrl }}'" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700">
+                    <td class="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                    <td class="whitespace-nowrap px-3 py-3 font-medium text-gray-800 dark:text-white">{{ $a->period?->nama ?? '-' }}</td>
+                    <td class="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">{{ $a->created_at?->format('d M Y') ?? '-' }}</td>
+                    <td class="whitespace-nowrap px-3 py-3">
                         <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $sClass }}">
                             {{ $sLabel }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
-                        {{ $a->selfScores->count() > 0 ? number_format($a->selfScores->avg('skor'), 1) : '-' }}
+                    <td class="whitespace-nowrap px-3 py-3 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                        {{ $a->history_soft_skill_score !== null ? number_format($a->history_soft_skill_score, 1) : '-' }}
                     </td>
-                    <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
-                        {{ $a->atasanScores->count() > 0 ? number_format($a->atasanScores->avg('skor'), 1) : '-' }}
+                    <td class="whitespace-nowrap px-3 py-3 text-right tabular-nums text-gray-600 dark:text-gray-400">
+                        {{ $a->history_hard_skill_score !== null ? number_format($a->history_hard_skill_score, 1) : '-' }}
                     </td>
-                    <td class="px-6 py-4 text-right">
+                    <td class="whitespace-nowrap px-3 py-3 text-right tabular-nums">
                         @if($a->skor_akhir !== null)
                         <span class="font-semibold text-purple-600 dark:text-purple-400">{{ number_format($a->skor_akhir, 1) }}</span>
                         @else
                         <span class="text-gray-400">-</span>
                         @endif
                     </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-center">
+                        <span class="inline-flex min-w-8 justify-center rounded-full px-2 py-0.5 text-xs font-semibold {{ $gradeClass }}">{{ $a->grade() }}</span>
+                    </td>
+                    <td class="whitespace-nowrap px-3 py-3 text-gray-600 dark:text-gray-300">{{ $a->atasan?->nama ?? '-' }}</td>
+                    <td class="whitespace-nowrap px-3 py-3 text-right">
+                        <a href="{{ $detailUrl }}" class="inline-flex min-h-9 items-center rounded-lg bg-purple-100 px-3 py-1.5 text-xs font-semibold text-purple-700 hover:bg-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:hover:bg-purple-900/70" aria-label="Detail penilaian periode {{ $a->period?->nama ?? '-' }}">
+                            Detail
+                        </a>
+                    </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" class="px-6 py-12 text-center"><p class="text-gray-500 dark:text-gray-400">Belum ada histori penilaian</p></td></tr>
+                <tr><td colspan="10" class="px-3 py-12 text-center"><p class="text-gray-500 dark:text-gray-400">Belum ada histori penilaian</p></td></tr>
                 @endforelse
             </tbody>
         </table>
