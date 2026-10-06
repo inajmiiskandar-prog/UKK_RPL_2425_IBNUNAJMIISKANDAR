@@ -162,6 +162,11 @@ class KpiAssessmentController extends Controller
             abort(403, 'Anda tidak memiliki akses ke penilaian ini!');
         }
 
+        // Final assessments are immutable after supervisor review.
+        if (in_array($assessment->status, ['sudah_dicek', 'selesai'], true)) {
+            return back()->with('error', 'Penilaian ini sudah dicek atasan dan tidak dapat diubah.');
+        }
+
         $request->validate([
             'scores' => 'required|array',
             'scores.*' => 'nullable|array',
