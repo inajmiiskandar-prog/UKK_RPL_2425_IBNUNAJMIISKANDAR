@@ -47,21 +47,48 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Master Data - wajib role ADMIN
+    // Master Data - view, create, and update access by resource role.
     Route::middleware('role:ADMIN')->prefix('masterdata')->name('masterdata.')->group(function () {
-        Route::resource('area', AreaController::class);
-        Route::resource('pop', PopController::class);
-        Route::resource('olt', OltController::class);
-        Route::resource('odp', OdpController::class);
-        Route::resource('port-pon', PortPonController::class);
-        Route::resource('paket', PaketController::class);
+        Route::resource('area', AreaController::class)->except(['destroy']);
+        Route::resource('pop', PopController::class)->except(['destroy']);
     });
 
-    // Material & ONT - ADMIN + LOGISTIK
+    Route::middleware('role:ADMIN,LEADER')->prefix('masterdata')->name('masterdata.')->group(function () {
+        Route::resource('olt', OltController::class)->except(['destroy']);
+        Route::resource('odp', OdpController::class)->except(['destroy']);
+    });
+
+    Route::middleware('role:ADMIN,LOGISTIK,TEKNISI')->prefix('masterdata')->name('masterdata.')->group(function () {
+        Route::resource('ont', OntController::class)->except(['destroy']);
+        Route::resource('material', MaterialController::class)->except(['destroy']);
+    });
+
+    Route::middleware('role:ADMIN,TEKNISI')->prefix('masterdata')->name('masterdata.')->group(function () {
+        Route::resource('port-pon', PortPonController::class)->except(['destroy']);
+    });
+
     Route::middleware('role:ADMIN,LOGISTIK')->prefix('masterdata')->name('masterdata.')->group(function () {
-        Route::resource('material', MaterialController::class);
+        Route::resource('paket', PaketController::class)->except(['destroy']);
+    });
+
+    // ADMIN removes Master Data; existing Logistics delete access for Material/ONT remains.
+    Route::middleware('role:ADMIN')->prefix('masterdata')->name('masterdata.')->group(function () {
+        Route::delete('area/{area}', [AreaController::class, 'destroy'])->name('area.destroy');
+        Route::delete('pop/{pop}', [PopController::class, 'destroy'])->name('pop.destroy');
+        Route::delete('olt/{olt}', [OltController::class, 'destroy'])->name('olt.destroy');
+        Route::delete('odp/{odp}', [OdpController::class, 'destroy'])->name('odp.destroy');
+        Route::delete('port-pon/{port_pon}', [PortPonController::class, 'destroy'])->name('port-pon.destroy');
+        Route::delete('paket/{paket}', [PaketController::class, 'destroy'])->name('paket.destroy');
+    });
+
+    Route::middleware('role:ADMIN,LOGISTIK')->prefix('masterdata')->name('masterdata.')->group(function () {
+        Route::delete('material/{material}', [MaterialController::class, 'destroy'])->name('material.destroy');
+        Route::delete('ont/{ont}', [OntController::class, 'destroy'])->name('ont.destroy');
+    });
+
+    // Stock additions remain ADMIN + LOGISTIK only.
+    Route::middleware('role:ADMIN,LOGISTIK')->prefix('masterdata')->name('masterdata.')->group(function () {
         Route::post('material/{material}/add-stock', [MaterialController::class, 'addStock'])->name('material.addStock');
-        Route::resource('ont', OntController::class);
     });
 
     // FAB - ADMIN + LEADER + SALES

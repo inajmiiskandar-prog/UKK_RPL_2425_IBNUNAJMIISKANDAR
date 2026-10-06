@@ -179,12 +179,28 @@
                     <span>Dashboard</span>
                 </a>
 
-                {{-- Master Data Section --}}
+                @php
+                    // Match Master Data navigation to the route role matrix.
+                    $masterDataRole = auth()->user()?->role;
+                    $canViewArea = $masterDataRole === 'ADMIN';
+                    $canViewPop = $masterDataRole === 'ADMIN';
+                    $canViewOlt = in_array($masterDataRole, ['ADMIN', 'LEADER'], true);
+                    $canViewOdp = in_array($masterDataRole, ['ADMIN', 'LEADER'], true);
+                    $canViewOnt = in_array($masterDataRole, ['ADMIN', 'LOGISTIK', 'TEKNISI'], true);
+                    $canViewPortPon = in_array($masterDataRole, ['ADMIN', 'TEKNISI'], true);
+                    $canViewMaterial = in_array($masterDataRole, ['ADMIN', 'LOGISTIK', 'TEKNISI'], true);
+                    $canViewPaket = in_array($masterDataRole, ['ADMIN', 'LOGISTIK'], true);
+                    $canViewAnyMasterData = $canViewArea || $canViewPop || $canViewOlt || $canViewOdp
+                        || $canViewOnt || $canViewPortPon || $canViewMaterial || $canViewPaket;
+                @endphp
+
+                @if($canViewAnyMasterData)
                 <div class="mt-6 mb-2 px-4">
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Master Data</p>
                 </div>
 
                 <div class="space-y-1">
+                    @if($canViewArea)
                     <a href="{{ route('masterdata.area.index') }}"
                        class="menu-item {{ request()->routeIs('masterdata.area.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,7 +209,9 @@
                         </svg>
                         <span>Area</span>
                     </a>
+                    @endif
 
+                    @if($canViewPop)
                     <a href="{{ route('masterdata.pop.index') }}"
                        class="menu-item {{ request()->routeIs('masterdata.pop.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -201,7 +219,9 @@
                         </svg>
                         <span>POP</span>
                     </a>
+                    @endif
 
+                    @if($canViewOlt)
                     <a href="{{ route('masterdata.olt.index') }}"
                        class="menu-item {{ request()->routeIs('masterdata.olt.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,7 +229,9 @@
                         </svg>
                         <span>OLT</span>
                     </a>
+                    @endif
 
+                    @if($canViewOdp)
                     <a href="{{ route('masterdata.odp.index') }}"
                        class="menu-item {{ request()->routeIs('masterdata.odp.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,7 +239,9 @@
                         </svg>
                         <span>ODP</span>
                     </a>
+                    @endif
 
+                    @if($canViewOnt)
                     <a href="{{ route('masterdata.ont.index') }}"
                        class="menu-item {{ request()->routeIs('masterdata.ont.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,7 +249,9 @@
                         </svg>
                         <span>ONT</span>
                     </a>
+                    @endif
 
+                    @if($canViewPortPon)
                     <a href="{{ route('masterdata.port-pon.index') }}"
                        class="menu-item {{ request()->routeIs('masterdata.port-pon.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +259,29 @@
                         </svg>
                         <span>Port PON</span>
                     </a>
+                    @endif
+
+                    @if($canViewMaterial)
+                    <a href="{{ route('masterdata.material.index') }}"
+                       class="menu-item {{ request()->routeIs('masterdata.material.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                        </svg>
+                        <span>Material</span>
+                    </a>
+                    @endif
+
+                    @if($canViewPaket)
+                    <a href="{{ route('masterdata.paket.index') }}"
+                       class="menu-item {{ request()->routeIs('masterdata.paket.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                        </svg>
+                        <span>Paket</span>
+                    </a>
+                    @endif
                 </div>
+                @endif
 
                 {{-- Transaksi Section --}}
                 <div class="mt-6 mb-2 px-4">
@@ -270,22 +318,6 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
                         <span>Users</span>
-                    </a>
-
-                    <a href="{{ route('masterdata.paket.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.paket.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                        <span>Paket</span>
-                    </a>
-
-                    <a href="{{ route('masterdata.material.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.material.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                        <span>Material</span>
                     </a>
 
                 </div>
