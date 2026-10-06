@@ -13,6 +13,17 @@ class KpiDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected KpiPeriod $period;
+    protected KpiPeriod $prevPeriod;
+
+    private function createTestUser(array $attributes): User
+    {
+        /** @var User $user */
+        $user = User::factory()->create($attributes);
+
+        return $user;
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -286,5 +297,61 @@ class KpiDashboardTest extends TestCase
         $response = $this->get(route('kpi.dashboard'));
 
         $response->assertRedirect(route('login'));
+    }
+
+    #[Test]
+    public function sidebar_kpi_links_match_role_access()
+    {
+        foreach (['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'] as $role) {
+            $user = $this->createTestUser([
+                'role' => $role,
+                'status' => true,
+            ]);
+
+            $response = $this->actingAs($user)->get(route('kpi.dashboard'));
+            $response->assertOk()
+                ->assertSee(route('kpi.assessment.index'), false)
+                ->assertSee(route('kpi.assessment.history'), false);
+
+            if ($role === 'ADMIN') {
+                $response->assertSee(route('kpi.soft-skill.index'), false)
+                    ->assertSee(route('kpi.hard-skill.index'), false)
+                    ->assertSee(route('kpi.report.index'), false);
+            } elseif ($role === 'LEADER') {
+                $response->assertDontSee(route('kpi.soft-skill.index'), false)
+                    ->assertSee(route('kpi.hard-skill.index'), false)
+                    ->assertDontSee(route('kpi.report.index'), false);
+            } else {
+                $response->assertDontSee(route('kpi.soft-skill.index'), false)
+                    ->assertDontSee(route('kpi.hard-skill.index'), false)
+                    ->assertDontSee(route('kpi.report.index'), false);
+            }
+        }
+    }
+
+    #[Test]
+    public function dashboard_area_chart_option_selects_the_filled_line_mode()
+    {
+        $admin = $this->createTestUser([
+            'role' => 'ADMIN',
+            'status' => true,
+        ]);
+        $employee = $this->createTestUser([
+            'role' => 'TEKNISI',
+            'status' => true,
+        ]);
+        KpiAssessment::create([
+            'user_id' => $employee->id_user,
+            'kpi_period_id' => $this->period->id,
+            'status' => 'sudah_dicek',
+            'skor_akhir' => 75,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('kpi.dashboard'));
+
+        $response->assertOk()
+            ->assertSee('<option value="area">Area</option>', false)
+            ->assertSee("type === 'area' ? 'line' : type", false)
+            ->assertSee("type === 'area' || type === 'bar'", false);
     }
 }

@@ -133,7 +133,7 @@
             <select id="chartType" onchange="updateChart()" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                 <option value="line">Line</option>
                 <option value="bar">Bar</option>
-                <option value="line" data-fill="true>Area</option>
+                <option value="area">Area</option>
             </select>
             <label class="text-sm text-gray-500 dark:text-gray-400">Rentang:</label>
             <select id="chartRange" onchange="updateChart()" class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
