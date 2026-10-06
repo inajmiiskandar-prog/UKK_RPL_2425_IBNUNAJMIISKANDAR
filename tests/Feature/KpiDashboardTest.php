@@ -6,6 +6,7 @@ use App\Models\KpiAssessment;
 use App\Models\KpiPeriod;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class KpiDashboardTest extends TestCase
@@ -33,7 +34,7 @@ class KpiDashboardTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_kpi_dashboard_and_see_all_data()
     {
         // Buat admin
@@ -113,7 +114,7 @@ class KpiDashboardTest extends TestCase
         $response->assertSee('85.5');
     }
 
-    /** @test */
+    #[Test]
     public function leader_can_view_kpi_dashboard_and_see_subordinate_data()
     {
         $admin = User::factory()->create([
@@ -154,7 +155,7 @@ class KpiDashboardTest extends TestCase
         $response->assertSeeText('Total Karyawan');
     }
 
-    /** @test */
+    #[Test]
     public function regular_employee_can_only_see_own_data()
     {
         $leader = User::factory()->create([
@@ -210,7 +211,7 @@ class KpiDashboardTest extends TestCase
         $response->assertSee('75.0');
     }
 
-    /** @test */
+    #[Test]
     public function user_without_subordinates_only_sees_own_data()
     {
         $leader = User::factory()->create([
@@ -255,7 +256,7 @@ class KpiDashboardTest extends TestCase
         $response->assertDontSee('99.9');
     }
 
-    /** @test */
+    #[Test]
     public function dashboard_shows_empty_state_when_no_data()
     {
         $admin = User::factory()->create([
@@ -279,7 +280,7 @@ class KpiDashboardTest extends TestCase
         $response->assertSee('Dashboard KPI');
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_access_dashboard()
     {
         $response = $this->get(route('kpi.dashboard'));

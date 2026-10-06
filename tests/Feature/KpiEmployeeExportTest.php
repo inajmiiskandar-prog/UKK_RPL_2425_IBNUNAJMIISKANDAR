@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 class KpiEmployeeExportTest extends TestCase
@@ -18,7 +19,7 @@ class KpiEmployeeExportTest extends TestCase
         return $prefix . '_' . uniqid() . '_' . time();
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_export_employee_data()
     {
         $leader = User::factory()->create([
@@ -69,7 +70,7 @@ class KpiEmployeeExportTest extends TestCase
         $this->assertStringContainsString('Developer', $content);
     }
 
-    /** @test */
+    #[Test]
     public function leader_cannot_export_employee_data()
     {
         $leader = User::factory()->create([
@@ -96,7 +97,7 @@ class KpiEmployeeExportTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function sales_cannot_export_employee_data()
     {
         $leader = User::factory()->create([
@@ -117,7 +118,7 @@ class KpiEmployeeExportTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function teknisi_cannot_export_employee_data()
     {
         $leader = User::factory()->create([
@@ -138,7 +139,7 @@ class KpiEmployeeExportTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function logistik_cannot_export_employee_data()
     {
         $leader = User::factory()->create([
@@ -159,7 +160,7 @@ class KpiEmployeeExportTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function export_with_ids_parameter()
     {
         $leader = User::factory()->create([
@@ -204,7 +205,7 @@ class KpiEmployeeExportTest extends TestCase
         $this->assertStringNotContainsString($teknisi3->nama, $content);
     }
 
-    /** @test */
+    #[Test]
     public function export_with_search_parameter()
     {
         $leader = User::factory()->create([
@@ -249,7 +250,7 @@ class KpiEmployeeExportTest extends TestCase
         $this->assertStringNotContainsString('Jane Doe', $content);
     }
 
-    /** @test */
+    #[Test]
     public function export_with_search_by_nik()
     {
         $leader = User::factory()->create([
@@ -292,7 +293,7 @@ class KpiEmployeeExportTest extends TestCase
         $this->assertStringContainsString($teknisi1->nama, $content);
     }
 
-    /** @test */
+    #[Test]
     public function export_with_empty_search_returns_data()
     {
         // Test ini memverifikasi bahwa export mengembalikan data
@@ -311,7 +312,7 @@ class KpiEmployeeExportTest extends TestCase
         $response->assertHeader('Content-Type', 'application/vnd.ms-excel');
     }
 
-    /** @test */
+    #[Test]
     public function export_includes_atasan_name()
     {
         $leader = User::factory()->create([
@@ -347,7 +348,7 @@ class KpiEmployeeExportTest extends TestCase
         $this->assertStringContainsString('Teknisi Bawah', $content);
     }
 
-    /** @test */
+    #[Test]
     public function export_does_not_include_password()
     {
         $admin = User::factory()->create([
@@ -373,7 +374,7 @@ class KpiEmployeeExportTest extends TestCase
         $this->assertStringNotContainsString('Password', $content);
     }
 
-    /** @test */
+    #[Test]
     public function export_includes_correct_columns()
     {
         $admin = User::factory()->create([
@@ -397,7 +398,7 @@ class KpiEmployeeExportTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function unauthenticated_user_cannot_export()
     {
         $response = $this->get(route('kpi.employee.export'));
