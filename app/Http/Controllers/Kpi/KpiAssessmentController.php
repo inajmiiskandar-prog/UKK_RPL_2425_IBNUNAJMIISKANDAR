@@ -365,23 +365,38 @@ class KpiAssessmentController extends Controller
 
         $targetUser = User::findOrFail($targetUserId);
 
-        // Ambil daftar periode untuk filter
         $periods = KpiPeriod::orderByDesc('tanggal_mulai')->get();
+        $periodInput = $request->query('period_id');
+        $periodId = is_scalar($periodInput)
+            ? filter_var($periodInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])
+            : false;
+        $selectedPeriod = $periodId ? $periods->firstWhere('id', (int) $periodId) : null;
+        $selectedPeriodId = $selectedPeriod?->id;
 
-        // Filter berdasarkan periode jika dipilih
-        $selectedPeriodId = $request->period_id;
+        $pageSizeInput = $request->query('per_page');
+        $requestedPageSize = is_scalar($pageSizeInput)
+            ? filter_var($pageSizeInput, FILTER_VALIDATE_INT)
+            : false;
+        $perPage = in_array($requestedPageSize, [10, 25, 50, 100], true) ? $requestedPageSize : 10;
 
-        // Ambil semua assessment user ini
-        $query = KpiAssessment::where('user_id', $targetUserId)
-                      ->with(['user', 'period', 'atasan', 'scores']);
-
-        if ($selectedPeriodId) {
+        // Apply period selection only after preserving the existing role-scoped user target.
+        $query = KpiAssessment::where('user_id', $targetUserId);
+        if ($selectedPeriodId !== null) {
             $query->where('kpi_period_id', $selectedPeriodId);
         }
 
-        $assessments = $query->orderByDesc('created_at')->get();
+        $chartAssessments = (clone $query)
+            ->select(['id', 'kpi_period_id', 'skor_akhir', 'created_at'])
+            ->with('period:id,nama')
+            ->orderByDesc('created_at')
+            ->get();
 
-        $scoreRecords = $assessments->flatMap(fn (KpiAssessment $assessment) => $assessment->scores);
+        $assessments = $query->with(['user', 'period', 'atasan', 'scores'])
+            ->orderByDesc('created_at')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $scoreRecords = $assessments->getCollection()->flatMap(fn (KpiAssessment $assessment) => $assessment->scores);
         foreach (['soft_skill', 'hard_skill'] as $skillType) {
             $scoresForType = new \Illuminate\Database\Eloquent\Collection(
                 $scoreRecords->where('skill_type', $skillType)->values()->all()
@@ -395,15 +410,12 @@ class KpiAssessmentController extends Controller
             $assessment->setAttribute('history_hard_skill_score', $skillScores['hard_skill']);
         });
 
-        // Selected period object untuk dropdown
-        $selectedPeriod = $selectedPeriodId ? $periods->find($selectedPeriodId) : null;
-
         // Siapkan data untuk chart tren
         // Label: nama periode dari period->nama
-        $chartLabels = $assessments->map(function($a) {
+        $chartLabels = $chartAssessments->map(function($a) {
             return $a->period?->nama ?? $a->created_at->format('M Y');
         })->toArray();
-        $chartScores = $assessments->pluck('skor_akhir')->toArray();
+        $chartScores = $chartAssessments->pluck('skor_akhir')->toArray();
 
         // Semua user untuk filter (hanya admin)
         $allUsers = [];
@@ -415,7 +427,7 @@ class KpiAssessmentController extends Controller
 
         return view('kpi.assessment.history', compact(
             'targetUser', 'assessments', 'chartLabels', 'chartScores', 'allUsers',
-            'periods', 'selectedPeriod'
+            'periods', 'selectedPeriod', 'perPage'
         ));
     }
 

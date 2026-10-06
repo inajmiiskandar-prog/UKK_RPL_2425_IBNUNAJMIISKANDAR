@@ -5,13 +5,13 @@
 @section('page-breadcrumb', 'KPI / Histori')
 
 @section('content')
-{{-- Filter (hanya untuk Admin) --}}
-@if(auth()->user()->role === 'ADMIN' && $allUsers->count() > 0)
+{{-- GET filters remain in the query string when navigating between pages. --}}
 <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-    <form method="GET" class="flex flex-wrap items-end gap-4">
-        <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Karyawan</label>
-            <select name="user_id" onchange="this.form.submit()" class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+    <form method="GET" class="grid min-w-0 grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        @if(auth()->user()->role === 'ADMIN' && $allUsers->count() > 0)
+        <div class="min-w-0">
+            <label for="history_user_id" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Karyawan</label>
+            <select id="history_user_id" name="user_id" class="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                 <option value="">Semua Karyawan</option>
                 @foreach($allUsers as $u)
                 <option value="{{ $u->id_user }}" {{ $targetUser->id_user == $u->id_user ? 'selected' : '' }}>
@@ -20,9 +20,10 @@
                 @endforeach
             </select>
         </div>
-        <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Periode</label>
-            <select name="period_id" onchange="this.form.submit()" class="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+        @endif
+        <div class="min-w-0">
+            <label for="history_period_id" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Periode</label>
+            <select id="history_period_id" name="period_id" class="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                 <option value="">Semua Periode</option>
                 @foreach($periods as $p)
                 <option value="{{ $p->id }}" {{ $selectedPeriod && $selectedPeriod->id == $p->id ? 'selected' : '' }}>
@@ -31,9 +32,24 @@
                 @endforeach
             </select>
         </div>
+        <div class="min-w-0">
+            <label for="history_per_page" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Per Halaman</label>
+            <select id="history_per_page" name="per_page" class="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                @foreach([10, 25, 50, 100] as $pageSize)
+                <option value="{{ $pageSize }}" {{ $perPage === $pageSize ? 'selected' : '' }}>{{ $pageSize }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="submit" class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800">
+                Terapkan
+            </button>
+            <a href="{{ route('kpi.assessment.history') }}" class="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700">
+                Reset
+            </a>
+        </div>
     </form>
 </div>
-@endif
 
 {{-- Info User --}}
 <div class="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
@@ -59,6 +75,14 @@
 @endif
 
 {{-- Histori Table --}}
+<div class="mb-3 flex flex-col gap-2 text-sm text-gray-600 dark:text-gray-300 sm:flex-row sm:items-center sm:justify-between">
+    <p>
+        Menampilkan {{ $assessments->firstItem() ?? 0 }}-{{ $assessments->lastItem() ?? 0 }} dari {{ $assessments->total() }}
+    </p>
+    <div class="max-w-full overflow-x-auto">
+        {{ $assessments->links() }}
+    </div>
+</div>
 <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <div class="overflow-x-auto">
         <table class="min-w-[1100px] w-full text-left text-sm">
@@ -146,6 +170,11 @@
         </table>
     </div>
 </div>
+@if($assessments->hasPages())
+<div class="mt-4 flex justify-end overflow-x-auto">
+    {{ $assessments->links() }}
+</div>
+@endif
 @endsection
 
 @push('scripts')
