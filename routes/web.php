@@ -91,8 +91,8 @@ Route::middleware('auth')->group(function () {
         Route::post('material/{material}/add-stock', [MaterialController::class, 'addStock'])->name('material.addStock');
     });
 
-    // FAB - ADMIN + LEADER + SALES
-    Route::middleware('role:ADMIN,LEADER,SALES')->prefix('jaringan')->name('jaringan.')->group(function () {
+    // FAB - ADMIN + LEADER + SALES + TEKNISI
+    Route::middleware('role:ADMIN,LEADER,SALES,TEKNISI')->prefix('jaringan')->name('jaringan.')->group(function () {
         Route::resource('fab', FabController::class)->except(['destroy']);
     });
 
@@ -101,8 +101,8 @@ Route::middleware('auth')->group(function () {
         Route::delete('fab/{fab}', [FabController::class, 'destroy'])->name('fab.destroy');
     });
 
-    // BAA - ADMIN + LEADER + TEKNISI
-    Route::middleware('role:ADMIN,LEADER,TEKNISI')->prefix('jaringan')->name('jaringan.')->group(function () {
+    // BAA - ADMIN + LEADER + TEKNISI + SALES
+    Route::middleware('role:ADMIN,LEADER,TEKNISI,SALES')->prefix('jaringan')->name('jaringan.')->group(function () {
         Route::resource('baa', BaaController::class)->except(['destroy']);
     });
 

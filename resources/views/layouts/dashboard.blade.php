@@ -283,12 +283,22 @@
                 </div>
                 @endif
 
-                {{-- Transaksi Section --}}
+                @php
+                    // Match network/settings navigation to the corresponding route middleware.
+                    $networkRole = auth()->user()?->role;
+                    $canViewFab = in_array($networkRole, ['ADMIN', 'LEADER', 'SALES', 'TEKNISI'], true);
+                    $canViewBaa = in_array($networkRole, ['ADMIN', 'LEADER', 'TEKNISI', 'SALES'], true);
+                    $canViewSettings = $networkRole === 'ADMIN';
+                    $canViewAnyTransaction = $canViewFab || $canViewBaa;
+                @endphp
+
+                @if($canViewAnyTransaction)
                 <div class="mt-6 mb-2 px-4">
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Transaksi</p>
                 </div>
 
                 <div class="space-y-1">
+                    @if($canViewFab)
                     <a href="{{ route('jaringan.fab.index') }}"
                        class="menu-item {{ request()->routeIs('jaringan.fab.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,7 +306,9 @@
                         </svg>
                         <span>Pelanggan (FAB)</span>
                     </a>
+                    @endif
 
+                    @if($canViewBaa)
                     <a href="{{ route('jaringan.baa.index') }}"
                        class="menu-item {{ request()->routeIs('jaringan.baa.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -304,7 +316,9 @@
                         </svg>
                         <span>BAA</span>
                     </a>
+                    @endif
                 </div>
+                @endif
 
                 @php
                     // Users routes are restricted to ADMIN in routes/web.php.
@@ -394,6 +408,7 @@
                 </div>
                 @endif
 
+                @if($canViewSettings)
                 {{-- Pengaturan Section (Paling Bawah) --}}
                 <div class="mt-6 mb-2 px-4">
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Pengaturan</p>
@@ -409,6 +424,7 @@
                         <span>Pengaturan</span>
                     </a>
                 </div>
+                @endif
             </nav>
         </aside>
 
