@@ -21,7 +21,6 @@ use App\Http\Controllers\Kpi\KpiSoftSkillController;
 use App\Http\Controllers\Kpi\KpiHardSkillController;
 use App\Http\Controllers\Kpi\KpiPeriodController;
 use App\Http\Controllers\Kpi\KpiAssessmentController;
-use App\Http\Controllers\Kpi\KpiEmployeeController;
 use App\Http\Controllers\Kpi\KpiReportController;
 use Illuminate\Support\Facades\Route;
 
@@ -112,20 +111,6 @@ Route::middleware('auth')->group(function () {
     // KPI Dashboard - semua role login bisa akses
     Route::prefix('kpi')->name('kpi.')->group(function () {
         Route::get('dashboard', [App\Http\Controllers\Kpi\KpiDashboardController::class, 'index'])->name('dashboard');
-    });
-
-    // Data Karyawan - ADMIN bisa edit, semua bisa lihat
-    Route::prefix('kpi')->name('kpi.')->group(function () {
-        // Export harus sebelum resource route agar tidak tertangkap wildcard
-        Route::middleware('role:ADMIN,LEADER')->group(function () {
-            Route::get('employee/export', [KpiEmployeeController::class, 'export'])->name('employee.export');
-        });
-        Route::resource('employee', KpiEmployeeController::class)->only(['index', 'show', 'create', 'store']);
-        Route::middleware('role:ADMIN')->group(function () {
-            Route::resource('employee', KpiEmployeeController::class)->only(['edit', 'update']);
-            Route::post('employee/{employee}/reset-password', [KpiEmployeeController::class, 'resetPassword'])->name('employee.reset-password');
-            Route::post('employee/{employee}/toggle-status', [KpiEmployeeController::class, 'toggleStatus'])->name('employee.toggle-status');
-        });
     });
 
     // Periode KPI - ADMIN only
