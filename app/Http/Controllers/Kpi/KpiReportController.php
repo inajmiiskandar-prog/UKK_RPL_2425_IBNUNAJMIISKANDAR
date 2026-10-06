@@ -13,25 +13,43 @@ use App\Http\Controllers\Controller;
 use App\Models\KpiAssessment;
 use App\Models\KpiPeriod;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class KpiReportController extends Controller
 {
+    private const REPORT_COLUMNS = [
+        'no' => 'No',
+        'nik' => 'NIK',
+        'nama_karyawan' => 'Nama Karyawan',
+        'divisi' => 'Divisi',
+        'jabatan' => 'Jabatan',
+        'periode' => 'Periode',
+        'skor_soft_skill' => 'Skor Soft Skill',
+        'skor_hard_skill' => 'Skor Hard Skill',
+        'skor_akhir' => 'Skor Akhir',
+        'grade' => 'Grade',
+        'status' => 'Status',
+        'disetujui_oleh' => 'Disetujui Oleh',
+    ];
+
     /**
      * Halaman utama export
      */
     public function index(Request $request)
     {
-        // Ambil periode untuk dropdown filter
         $periods = KpiPeriod::orderByDesc('tanggal_mulai')->get();
-
-        // Periode yang dipilih
         $selectedPeriod = $request->period_id
             ? KpiPeriod::find($request->period_id)
             : KpiPeriod::where('status', 'selesai')->orWhere('status', 'aktif')->first();
+        $assessments = $selectedPeriod
+            ? $this->assessmentsForPeriod($selectedPeriod)
+            : new EloquentCollection();
+        $rows = $selectedPeriod ? $this->reportRows($assessments, $selectedPeriod) : [];
+        $stats = $this->reportStats($assessments);
 
-        return view('kpi.report.index', compact('periods', 'selectedPeriod'));
+        return view('kpi.report.index', compact('periods', 'selectedPeriod', 'rows', 'stats'))
+            ->with('columns', self::REPORT_COLUMNS);
     }
 
     /**
@@ -45,58 +63,73 @@ class KpiReportController extends Controller
 
         $period = KpiPeriod::findOrFail($request->period_id);
 
-        // Ambil semua assessment di periode ini
-        $assessments = KpiAssessment::with(['user', 'atasan', 'scores'])
-                                   ->where('kpi_period_id', $period->id)
-                                   ->whereIn('status', ['sudah_dicek', 'selesai'])
-                                   ->orderBy(
-                                       User::query()
-                                           ->select('nama')
-                                           ->whereColumn('users.id_user', 'kpi_assessments.user_id')
-                                           ->limit(1),
-                                       'asc'
-                                   )
-                                   ->get();
+        $assessments = $this->assessmentsForPeriod($period);
+        $rows = $this->reportRows($assessments, $period);
+        $stats = $this->reportStats($assessments);
 
-        // Statistik summary
-        $stats = [
+        return view('kpi.report.preview', compact('period', 'rows', 'stats'))
+            ->with('columns', self::REPORT_COLUMNS);
+    }
+
+    private function assessmentsForPeriod(KpiPeriod $period): EloquentCollection
+    {
+        return KpiAssessment::with(['user', 'atasan', 'period'])
+            ->where('kpi_period_id', $period->id)
+            ->whereIn('status', ['sudah_dicek', 'selesai'])
+            ->orderBy(
+                User::query()
+                    ->select('nama')
+                    ->whereColumn('users.id_user', 'kpi_assessments.user_id')
+                    ->limit(1),
+                'asc'
+            )
+            ->get();
+    }
+
+    private function reportRows(EloquentCollection $assessments, KpiPeriod $period): array
+    {
+        return $assessments->values()->map(function (KpiAssessment $assessment, int $index) use ($period) {
+            $scores = $assessment->calculateSkillScores();
+
+            return [
+                'no' => $index + 1,
+                'nik' => $assessment->user->nik ?? '-',
+                'nama_karyawan' => $assessment->user->nama ?? '-',
+                'divisi' => $assessment->user->divisi ?: '-',
+                'jabatan' => $assessment->user->jabatan ?: '-',
+                'periode' => $assessment->period->nama ?? $period->nama,
+                'skor_soft_skill' => $this->formatScore($scores['soft_skill']),
+                'skor_hard_skill' => $this->formatScore($scores['hard_skill']),
+                'skor_akhir' => $this->formatScore($assessment->skor_akhir),
+                'grade' => $assessment->grade(),
+                'status' => $assessment->status,
+                'disetujui_oleh' => $assessment->atasan->nama ?? '-',
+            ];
+        })->all();
+    }
+
+    private function reportStats(EloquentCollection $assessments): array
+    {
+        return [
             'total' => $assessments->count(),
             'completed' => $assessments->where('status', 'selesai')->count(),
-            'pending' => $assessments->where('status', 'pending')->count(),
-            'self_done' => $assessments->where('status', 'self_done')->count(),
-            'atasan_done' => $assessments->where('status', 'atasan_done')->count(),
             'avg_score' => $assessments->whereNotNull('skor_akhir')->avg('skor_akhir'),
-            'min_score' => $assessments->whereNotNull('skor_akhir')->min('skor_akhir'),
-            'max_score' => $assessments->whereNotNull('skor_akhir')->max('skor_akhir'),
         ];
+    }
 
-        return view('kpi.report.preview', compact('period', 'assessments', 'stats'));
+    private function formatScore(int|float|string|null $score): string
+    {
+        return $score === null ? '-' : number_format((float) $score, 2, '.', '');
     }
 
     /**
      * Export ke CSV (ringan, tidak perlu library tambahan)
      */
-    public function exportCsv(Request $request)
+    public function exportCsv(int $period)
     {
-        $request->validate([
-            'period_id' => 'required|exists:kpi_periods,id',
-        ]);
-
-        $period = KpiPeriod::findOrFail($request->period_id);
-        $assessments = KpiAssessment::with(['user', 'atasan', 'scores'])
-                                   ->where('kpi_period_id', $period->id)
-                                   ->whereIn('status', ['sudah_dicek', 'selesai'])
-                                   ->orderBy(
-                                       User::query()
-                                           ->select('nama')
-                                           ->whereColumn('users.id_user', 'kpi_assessments.user_id')
-                                           ->limit(1),
-                                       'asc'
-                                   )
-                                   ->get();
-
-        // Generate CSV
-        $csvContent = $this->generateCsvContent($period, $assessments);
+        $period = KpiPeriod::findOrFail($period);
+        $rows = $this->reportRows($this->assessmentsForPeriod($period), $period);
+        $csvContent = $this->generateCsvContent($rows);
 
         $filename = "KPI_Report_{$period->nama}_" . date('Ymd') . ".csv";
 
@@ -108,98 +141,28 @@ class KpiReportController extends Controller
     /**
      * Generate konten CSV
      */
-    private function generateCsvContent($period, $assessments)
+    private function generateCsvContent(array $rows): string
     {
-        $lines = [];
-
-        // Header
-        $lines[] = "LAPORAN REKAPITULASI KPI";
-        $lines[] = "Periode: {$period->nama}";
-        $lines[] = "Tanggal: {$period->tanggal_mulai->format('d/m/Y')} - {$period->tanggal_selesai->format('d/m/Y')}";
-        $lines[] = "";
-
-        // Header tabel
-        $lines[] = "No,NIK,Nama Karyawan,Divisi,Jabatan,NIK Atasan,Nama Atasan,Status Penilaian,Skor Akhir";
-
-        // Data
-        $no = 1;
-        foreach ($assessments as $a) {
-            $user = $a->user;
-            $atasan = $a->atasan;
-
-            $statusLabel = match($a->status) {
-                'pending' => 'Belum Dinilai',
-                'self_done' => 'Self Assessment Selesai',
-                'atasan_done' => 'Penilaian Atasan Selesai',
-                'selesai' => 'Selesai',
-                default => $a->status,
-            };
-
-            $lines[] = implode(',', [
-                $no++,
-                $this->escapeCsv($user->nik ?? '-'),
-                $this->escapeCsv($user->nama),
-                $this->escapeCsv($user->divisi ?? '-'),
-                $this->escapeCsv($user->jabatan ?? '-'),
-                $this->escapeCsv($atasan->nik ?? '-'),
-                $this->escapeCsv($atasan->nama ?? '-'),
-                $statusLabel,
-                $a->skor_akhir !== null ? number_format($a->skor_akhir, 2) : '-',
-            ]);
+        $stream = fopen('php://temp', 'r+');
+        fputcsv($stream, array_values(self::REPORT_COLUMNS));
+        foreach ($rows as $row) {
+            fputcsv($stream, array_values($row));
         }
+        rewind($stream);
+        $content = stream_get_contents($stream);
+        fclose($stream);
 
-        // Footer statistics
-        $lines[] = "";
-        $lines[] = "RINGKASAN";
-        $completed = $assessments->where('status', 'selesai');
-        $lines[] = "Total Karyawan," . $assessments->count();
-        $lines[] = "Sudah Selesai," . $completed->count();
-        $lines[] = "Rata-rata Skor," . ($completed->avg('skor_akhir') !== null ? number_format($completed->avg('skor_akhir'), 2) : '-');
-        $lines[] = "Skor Tertinggi," . ($completed->max('skor_akhir') !== null ? number_format($completed->max('skor_akhir'), 2) : '-');
-        $lines[] = "Skor Terendah," . ($completed->min('skor_akhir') !== null ? number_format($completed->min('skor_akhir'), 2) : '-');
-
-        return implode("\n", $lines);
-    }
-
-    /**
-     * Escape karakter untuk CSV
-     */
-    private function escapeCsv($value)
-    {
-        if ($value === null || $value === '') {
-            return '-';
-        }
-        $value = str_replace('"', '""', $value);
-        if (strpos($value, ',') !== false || strpos($value, '"') !== false || strpos($value, "\n") !== false) {
-            return '"' . $value . '"';
-        }
-        return $value;
+        return $content;
     }
 
     /**
      * Export ke Excel via HTML table (alternatif sederhana)
      */
-    public function exportExcel(Request $request)
+    public function exportExcel(int $period)
     {
-        $request->validate([
-            'period_id' => 'required|exists:kpi_periods,id',
-        ]);
-
-        $period = KpiPeriod::findOrFail($request->period_id);
-        $assessments = KpiAssessment::with(['user', 'atasan'])
-                                   ->where('kpi_period_id', $period->id)
-                                   ->whereIn('status', ['sudah_dicek', 'selesai'])
-                                   ->orderBy(
-                                       User::query()
-                                           ->select('nama')
-                                           ->whereColumn('users.id_user', 'kpi_assessments.user_id')
-                                           ->limit(1),
-                                       'asc'
-                                   )
-                                   ->get();
-
-        // Generate HTML table yang bisa di-save sebagai Excel
-        $html = $this->generateExcelHtml($period, $assessments);
+        $period = KpiPeriod::findOrFail($period);
+        $rows = $this->reportRows($this->assessmentsForPeriod($period), $period);
+        $html = $this->generateExcelHtml($rows);
 
         $filename = "KPI_Report_{$period->nama}_" . date('Ymd') . ".xls";
 
@@ -211,55 +174,24 @@ class KpiReportController extends Controller
     /**
      * Generate HTML untuk Excel export
      */
-    private function generateExcelHtml($period, $assessments)
+    private function generateExcelHtml(array $rows): string
     {
         $html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
         $html .= '<head><meta charset="utf-8"></head><body>';
-        $html .= '<table border="1">';
-
-        // Title
-        $html .= '<tr><td colspan="9" style="font-weight:bold;font-size:14pt;">LAPORAN REKAPITULASI KPI</td></tr>';
-        $html .= "<tr><td colspan=\"9\">Periode: {$period->nama} ({$period->tanggal_mulai->format('d/m/Y')} - {$period->tanggal_selesai->format('d/m/Y')})</td></tr>";
-        $html .= '<tr></tr>';
-
-        // Header
-        $headers = ['No', 'NIK', 'Nama Karyawan', 'Divisi', 'Jabatan', 'Nama Atasan', 'Status', 'Skor Akhir'];
-        $html .= '<tr>';
-        foreach ($headers as $h) {
-            $html .= "<th style=\"background:#9333ea;color:white;\">{$h}</th>";
+        $html .= '<table border="1"><thead><tr>';
+        foreach (self::REPORT_COLUMNS as $header) {
+            $html .= '<th style="background:#9333ea;color:white;">' . htmlspecialchars($header, ENT_QUOTES, 'UTF-8') . '</th>';
         }
-        $html .= '</tr>';
-
-        // Data
-        $no = 1;
-        foreach ($assessments as $a) {
-            $user = $a->user;
-            $atasan = $a->atasan;
-
-            $statusLabel = match($a->status) {
-                'pending' => 'Belum Dinilai',
-                'self_done' => 'Self Selesai',
-                'atasan_done' => 'Atasan Selesai',
-                'selesai' => 'Selesai',
-                default => $a->status,
-            };
-
-            $bg = $no % 2 === 0 ? '#f3e8ff' : '#ffffff';
-
-            $html .= "<tr style=\"background:{$bg}\">";
-            $html .= "<td>{$no}</td>";
-            $html .= "<td>{$user->nik}</td>";
-            $html .= "<td>{$user->nama}</td>";
-            $html .= "<td>{$user->divisi}</td>";
-            $html .= "<td>{$user->jabatan}</td>";
-            $html .= "<td>{$atasan->nama}</td>";
-            $html .= "<td>{$statusLabel}</td>";
-            $html .= "<td>" . ($a->skor_akhir !== null ? number_format($a->skor_akhir, 2) : '-') . "</td>";
+        $html .= '</tr></thead><tbody>';
+        foreach ($rows as $row) {
+            $html .= '<tr>';
+            foreach ($row as $value) {
+                $html .= '<td>' . htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8') . '</td>';
+            }
             $html .= '</tr>';
-            $no++;
         }
 
-        $html .= '</table></body></html>';
+        $html .= '</tbody></table></body></html>';
 
         return $html;
     }

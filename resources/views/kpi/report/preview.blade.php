@@ -50,50 +50,5 @@
     </div>
 </div>
 
-<div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-100 bg-gray-50 dark:border-slate-700 dark:bg-slate-700/50">
-                <tr>
-                    <th class="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">#</th>
-                    <th class="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">NIK</th>
-                    <th class="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Nama</th>
-                    <th class="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Divisi</th>
-                    <th class="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Atasan</th>
-                    <th class="px-4 py-3 font-semibold text-gray-600 dark:text-gray-300">Status</th>
-                    <th class="px-4 py-3 text-right font-semibold text-gray-600 dark:text-gray-300">Skor</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-50 dark:divide-slate-700">
-                @forelse($assessments as $a)
-                <tr class="hover:bg-gray-50 dark:hover:bg-slate-700">
-                    <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
-                    <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $a->user->nik ?? '-' }}</td>
-                    <td class="px-4 py-3 font-medium text-gray-800 dark:text-white">{{ $a->user->nama }}</td>
-                    <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $a->user->divisi ?? '-' }}</td>
-                    <td class="px-4 py-3 text-gray-500 dark:text-gray-400">{{ $a->atasan->nama ?? '-' }}</td>
-                    <td class="px-4 py-3">
-                        @php
-                            $sClass = match($a->status) {
-                                'selesai' => 'bg-green-100 text-green-700',
-                                'atasan_done' => 'bg-orange-100 text-orange-700',
-                                'self_done' => 'bg-yellow-100 text-yellow-700',
-                                'menunggu_review' => 'bg-yellow-100 text-yellow-700',
-                                'sudah_dicek' => 'bg-green-100 text-green-700',
-                                default => 'bg-gray-100 text-gray-600',
-                            };
-                        @endphp
-                        <span class="rounded-full px-2 py-0.5 text-xs font-medium {{ $sClass }}">{{ $a->status }}</span>
-                    </td>
-                    <td class="px-4 py-3 text-right font-semibold text-purple-600 dark:text-purple-400">
-                        {{ $a->skor_akhir !== null ? number_format($a->skor_akhir, 1) : '-' }}
-                    </td>
-                </tr>
-                @empty
-                <tr><td colspan="7" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">Tidak ada data</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div>
+@include('kpi.report._table', ['rows' => $rows, 'columns' => $columns])
 @endsection
