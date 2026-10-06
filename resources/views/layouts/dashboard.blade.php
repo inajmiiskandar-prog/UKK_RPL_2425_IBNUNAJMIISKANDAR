@@ -306,7 +306,12 @@
                     </a>
                 </div>
 
-                {{-- Lainnya Section --}}
+                @php
+                    // Users routes are restricted to ADMIN in routes/web.php.
+                    $canManageUsers = auth()->user()?->role === 'ADMIN';
+                @endphp
+
+                @if($canManageUsers)
                 <div class="mt-6 mb-2 px-4">
                     <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Lainnya</p>
                 </div>
@@ -321,6 +326,7 @@
                     </a>
 
                 </div>
+                @endif
 
                 @php
                     // Keep sidebar visibility aligned with the KPI route middleware.

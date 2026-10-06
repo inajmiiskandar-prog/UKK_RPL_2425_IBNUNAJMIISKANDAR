@@ -113,6 +113,22 @@ class MasterDataRoleAccessTest extends TestCase
         }
     }
 
+    public function test_users_sidebar_link_and_lainnya_heading_are_admin_only(): void
+    {
+        foreach (['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'] as $role) {
+            $response = $this->actingAs($this->createUser($role))->get(route('profile.edit'));
+
+            $response->assertOk();
+            if ($role === 'ADMIN') {
+                $response->assertSee(route('users.index'), false)
+                    ->assertSeeText('Lainnya');
+            } else {
+                $response->assertDontSee(route('users.index'), false)
+                    ->assertDontSeeText('Lainnya');
+            }
+        }
+    }
+
     public function test_master_data_index_actions_match_role_permissions(): void
     {
         $fixtures = $this->createMasterDataFixtures();
