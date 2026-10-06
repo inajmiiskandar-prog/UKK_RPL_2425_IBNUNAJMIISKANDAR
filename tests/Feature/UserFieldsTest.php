@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UserFieldsTest extends TestCase
@@ -122,6 +123,156 @@ class UserFieldsTest extends TestCase
             'no_hp' => '081234567890',
             'no_telp' => '081234567890',
         ]);
+    }
+
+    public function test_user_can_update_profile_fields_and_atasan_id()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $leader = User::factory()->create(['role' => 'LEADER', 'status' => true]);
+        $employee = User::factory()->create([
+            'nama' => 'Old Employee',
+            'username' => 'oldemployee',
+            'role' => 'TEKNISI',
+            'status' => true,
+            'atasan_id' => null,
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('users.update', $employee->id_user), [
+            'nama' => 'Updated Employee',
+            'username' => 'updatedemployee',
+            'role' => 'TEKNISI',
+            'status' => '1',
+            'jkl' => 'PEREMPUAN',
+            'nik' => '99887766',
+            'divisi' => 'IT',
+            'jabatan' => 'Developer',
+            'alamat' => 'Jl. Baru No. 10',
+            'telepon' => '081122334455',
+            'tanggal_masuk' => '2026-02-10',
+            'atasan_id' => $leader->id_user,
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $this->assertDatabaseHas('users', [
+            'id_user' => $employee->id_user,
+            'nama' => 'Updated Employee',
+            'username' => 'updatedemployee',
+            'nik' => '99887766',
+            'divisi' => 'IT',
+            'jabatan' => 'Developer',
+            'alamat' => 'Jl. Baru No. 10',
+            'no_hp' => '081122334455',
+            'no_telp' => '081122334455',
+            'tanggal_masuk' => '2026-02-10',
+            'join_date' => '2026-02-10',
+            'atasan_id' => $leader->id_user,
+        ]);
+    }
+
+    // Keep edit-password behavior aligned with the controller's confirmed rule.
+    public function test_user_can_update_password_with_matching_confirmation()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $employee = User::factory()->create([
+            'role' => 'TEKNISI',
+            'status' => true,
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('users.update', $employee->id_user), [
+            'nama' => $employee->nama,
+            'username' => $employee->username,
+            'role' => $employee->role,
+            'status' => '1',
+            'jkl' => $employee->jkl,
+            'password' => 'new-password-123',
+            'password_confirmation' => 'new-password-123',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $this->assertTrue(Hash::check('new-password-123', $employee->fresh()->password));
+    }
+
+    public function test_user_cannot_update_password_with_mismatched_confirmation()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $employee = User::factory()->create([
+            'role' => 'TEKNISI',
+            'status' => true,
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('users.update', $employee->id_user), [
+            'nama' => $employee->nama,
+            'username' => $employee->username,
+            'role' => $employee->role,
+            'status' => '1',
+            'jkl' => $employee->jkl,
+            'password' => 'new-password-123',
+            'password_confirmation' => 'different-password',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertTrue(Hash::check('old-password', $employee->fresh()->password));
+    }
+
+    public function test_blank_password_keeps_existing_password_unchanged()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $employee = User::factory()->create([
+            'role' => 'TEKNISI',
+            'status' => true,
+            'password' => Hash::make('old-password'),
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('users.update', $employee->id_user), [
+            'nama' => $employee->nama,
+            'username' => $employee->username,
+            'role' => $employee->role,
+            'status' => '1',
+            'jkl' => $employee->jkl,
+            'password' => '',
+            'password_confirmation' => '',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $this->assertTrue(Hash::check('old-password', $employee->fresh()->password));
+    }
+
+    public function test_user_cannot_set_self_as_atasan_on_store_or_update()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $employee = User::factory()->create([
+            'nama' => 'Self Atasan',
+            'username' => 'selfatasan',
+            'role' => 'SALES',
+            'status' => true,
+        ]);
+
+        $storeResponse = $this->actingAs($admin)->post(route('users.store'), [
+            'nama' => 'Has Self Atasan',
+            'username' => 'hasselfatasan',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'role' => 'TEKNISI',
+            'status' => '1',
+            'jkl' => 'LAKI_LAKI',
+            'atasan_id' => $employee->id_user,
+        ]);
+
+        $this->assertTrue($storeResponse->isRedirect());
+
+        $updateResponse = $this->actingAs($admin)->put(route('users.update', $employee->id_user), [
+            'nama' => $employee->nama,
+            'username' => $employee->username,
+            'role' => 'TEKNISI',
+            'status' => '1',
+            'jkl' => 'LAKI_LAKI',
+            'atasan_id' => $employee->id_user,
+        ]);
+
+        $this->assertTrue($updateResponse->isRedirect());
+        $this->assertDatabaseMissing('users', ['id_user' => $employee->id_user, 'atasan_id' => $employee->id_user]);
     }
 
     public function test_kode_user_has_3_digit_format()

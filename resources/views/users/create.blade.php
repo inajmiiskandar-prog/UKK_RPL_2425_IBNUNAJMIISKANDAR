@@ -67,8 +67,43 @@
         </div>
         <div class="grid gap-5 md:grid-cols-2">
             <div>
-                <label for="no_hp" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">No. HP</label>
-                <input type="text" id="no_hp" name="no_hp" value="{{ old('no_hp') }}" placeholder="08xxxxxxxxxx" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                <label for="nik" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">NIK</label>
+                <input type="text" id="nik" name="nik" value="{{ old('nik') }}" placeholder="Nomor induk karyawan" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+            <div>
+                <label for="divisi" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Divisi</label>
+                <input type="text" id="divisi" name="divisi" value="{{ old('divisi') }}" placeholder="Divisi / unit" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label for="jabatan" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Jabatan</label>
+                <input type="text" id="jabatan" name="jabatan" value="{{ old('jabatan') }}" placeholder="Jabatan saat ini" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+            <div>
+                <label for="atasan_id" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Atasan</label>
+                <select id="atasan_id" name="atasan_id" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+                    <option value="">Pilih Atasan</option>
+                    @foreach($atasanOptions as $atasan)
+                        <option value="{{ $atasan->id_user }}" {{ old('atasan_id') == $atasan->id_user ? 'selected' : '' }}>{{ $atasan->nama }} ({{ $atasan->role }})</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label for="alamat" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Alamat</label>
+                <textarea id="alamat" name="alamat" rows="3" placeholder="Alamat lengkap" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">{{ old('alamat') }}</textarea>
+            </div>
+            <div>
+                <label for="telepon" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Telepon</label>
+                <input type="text" id="telepon" name="telepon" value="{{ old('telepon') }}" placeholder="08xxxxxxxxxx" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
+            </div>
+        </div>
+        <div class="grid gap-5 md:grid-cols-2">
+            <div>
+                <label for="tanggal_masuk" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Tanggal Masuk</label>
+                <input type="date" id="tanggal_masuk" name="tanggal_masuk" value="{{ old('tanggal_masuk') }}" class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 dark:border-slate-600 dark:bg-slate-700 dark:text-white">
             </div>
             <div>
                 <label for="email" class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-200">Email</label>

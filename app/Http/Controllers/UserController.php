@@ -54,7 +54,11 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('users.create');
+        $atasanOptions = User::whereIn('role', ['ADMIN', 'LEADER'])
+            ->orderBy('nama')
+            ->get();
+
+        return view('users.create', compact('atasanOptions'));
     }
 
     public function store(Request $request)
@@ -75,6 +79,7 @@ class UserController extends Controller
             'jabatan' => 'nullable|string|max:100',
             'alamat' => 'nullable|string|max:500',
             'tanggal_masuk' => 'nullable|date',
+            'atasan_id' => 'nullable|exists:users,id_user',
         ], [
             'nama.required' => 'Nama wajib diisi!',
             'username.required' => 'Username wajib diisi!',
@@ -84,6 +89,7 @@ class UserController extends Controller
             'password.confirmed' => 'Konfirmasi password tidak cocok!',
             'jkl.required' => 'Jenis Kelamin wajib dipilih!',
             'role.required' => 'Role wajib dipilih!',
+            'atasan_id.exists' => 'Atasan yang dipilih tidak valid!',
         ]);
 
         try {
@@ -119,6 +125,7 @@ class UserController extends Controller
                 'alamat' => $request->alamat,
                 'tanggal_masuk' => $request->tanggal_masuk,
                 'join_date' => $request->tanggal_masuk,
+                'atasan_id' => $request->atasan_id ?: null,
             ]);
 
             \App\Models\ActivityLog::log('USER_CREATED', "Menambah User: {$request->nama}", auth()->id());
@@ -139,7 +146,12 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        $atasanOptions = User::whereIn('role', ['ADMIN', 'LEADER'])
+            ->where('id_user', '!=', $user->id_user)
+            ->orderBy('nama')
+            ->get();
+
+        return view('users.edit', compact('user', 'atasanOptions'));
     }
 
     public function update(Request $request, User $user)
@@ -152,21 +164,42 @@ class UserController extends Controller
             'jkl' => 'required|in:LAKI_LAKI,PEREMPUAN',
             'role' => 'required|in:ADMIN,LEADER,SALES,TEKNISI,LOGISTIK',
             'no_hp' => 'nullable|string|max:20',
+            'telepon' => 'nullable|string|max:20',
             'email' => 'nullable|email|unique:users,email,' . $user->id_user . ',id_user',
             'status' => 'required|in:0,1',
+            'nik' => 'nullable|string|max:20',
+            'divisi' => 'nullable|string|max:100',
+            'jabatan' => 'nullable|string|max:100',
+            'alamat' => 'nullable|string|max:500',
+            'tanggal_masuk' => 'nullable|date',
+            'atasan_id' => ['nullable', 'exists:users,id_user', function ($attribute, $value, $fail) use ($user) {
+                if ($value != null && (int) $value === (int) $user->id_user) {
+                    $fail('Atasan tidak bisa sama dengan user itu sendiri!');
+                }
+            }],
         ]);
 
         try {
             DB::beginTransaction();
+
+            $telepon = $request->telepon ?: $request->no_hp;
 
             $data = [
                 'nama' => $request->nama,
                 'username' => $request->username,
                 'jkl' => $request->jkl,
                 'role' => $request->role,
-                'no_hp' => $request->no_hp,
+                'no_hp' => $telepon,
+                'no_telp' => $telepon,
                 'email' => $request->email,
                 'status' => $request->status,
+                'nik' => $request->nik,
+                'divisi' => $request->divisi,
+                'jabatan' => $request->jabatan,
+                'alamat' => $request->alamat,
+                'tanggal_masuk' => $request->tanggal_masuk,
+                'join_date' => $request->tanggal_masuk,
+                'atasan_id' => $request->atasan_id ?: null,
             ];
 
             if ($request->password) {
