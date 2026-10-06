@@ -359,6 +359,66 @@ class UserFieldsTest extends TestCase
         $this->assertEquals('custom@example.com', $user->email);
     }
 
+    // Preserve the shared Users role form and its server-side role whitelist.
+    public function test_users_create_and_edit_forms_show_all_allowed_roles()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $employee = User::factory()->create(['role' => 'SALES', 'status' => true]);
+        $allowedRoles = ['ADMIN', 'LEADER', 'SALES', 'TEKNISI', 'LOGISTIK'];
+
+        $createResponse = $this->actingAs($admin)->get(route('users.create'));
+        $createResponse->assertOk();
+        foreach ($allowedRoles as $role) {
+            $createResponse->assertSee('value="' . $role . '"', false);
+        }
+
+        $editResponse = $this->actingAs($admin)->get(route('users.edit', $employee->id_user));
+        $editResponse->assertOk();
+        foreach ($allowedRoles as $role) {
+            $editResponse->assertSee('value="' . $role . '"', false);
+        }
+    }
+
+    public function test_user_update_accepts_allowed_role()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $employee = User::factory()->create(['role' => 'SALES', 'status' => true]);
+
+        $response = $this->actingAs($admin)->put(route('users.update', $employee->id_user), [
+            'nama' => $employee->nama,
+            'username' => $employee->username,
+            'role' => 'LEADER',
+            'status' => '1',
+            'jkl' => $employee->jkl,
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $this->assertDatabaseHas('users', [
+            'id_user' => $employee->id_user,
+            'role' => 'LEADER',
+        ]);
+    }
+
+    public function test_user_update_rejects_role_outside_allowed_values()
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $employee = User::factory()->create(['role' => 'SALES', 'status' => true]);
+
+        $response = $this->actingAs($admin)->put(route('users.update', $employee->id_user), [
+            'nama' => $employee->nama,
+            'username' => $employee->username,
+            'role' => 'OWNER',
+            'status' => '1',
+            'jkl' => $employee->jkl,
+        ]);
+
+        $response->assertSessionHasErrors('role');
+        $this->assertDatabaseHas('users', [
+            'id_user' => $employee->id_user,
+            'role' => 'SALES',
+        ]);
+    }
+
     public function test_user_can_store_each_allowed_role_ADMIN()
     {
         $admin = User::factory()->create(['role' => 'ADMIN']);
