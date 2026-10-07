@@ -42,14 +42,14 @@ class DashboardController extends Controller
 
         // ONT Status
         $ont_status = [
-            'tersedia' => Ont::where('status', 'TERSDIA')->count(),
+            'tersedia' => Ont::where('status', 'TERSEDIA')->count(),
             'terpasang' => Ont::where('status', 'TERPASANG')->count(),
             'rusak' => Ont::where('status', 'RUSAK')->count(),
         ];
 
         // Port PON Status
         $port_status = [
-            'tersedia' => PortPon::where('status', 'TERSDIA')->count(),
+            'tersedia' => PortPon::where('status', 'TERSEDIA')->count(),
             'terpasang' => PortPon::where('status', 'TERPASANG')->count(),
             'rusak' => PortPon::where('status', 'RUSAK')->count(),
         ];
@@ -72,29 +72,33 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Monthly FAB stats (last 6 months)
-        $monthly_fab = Fab::select(
-            DB::raw('MONTH(createdAt) as month'),
-            DB::raw('YEAR(createdAt) as year'),
-            DB::raw('COUNT(*) as total')
-        )
-            ->where('createdAt', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('MONTH(createdAt)'), DB::raw('YEAR(createdAt)'))
-            ->orderBy('year')
-            ->orderBy('month')
-            ->get();
+        // Monthly FAB stats (last 6 months) - SQLite compatible using Carbon ranges
+        $monthly_fab = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $start = $date->copy()->startOfMonth();
+            $end = $date->copy()->endOfMonth();
+            $count = Fab::whereBetween('createdAt', [$start, $end])->count();
+            $monthly_fab[] = (object) [
+                'month' => (int) $date->format('m'),
+                'year' => (int) $date->format('Y'),
+                'total' => $count,
+            ];
+        }
 
-        // Monthly BAA stats (last 6 months)
-        $monthly_baa = Baa::select(
-            DB::raw('MONTH(createdAt) as month'),
-            DB::raw('YEAR(createdAt) as year'),
-            DB::raw('COUNT(*) as total')
-        )
-            ->where('createdAt', '>=', now()->subMonths(6))
-            ->groupBy(DB::raw('MONTH(createdAt)'), DB::raw('YEAR(createdAt)'))
-            ->orderBy('year')
-            ->orderBy('month')
-            ->get();
+        // Monthly BAA stats (last 6 months) - SQLite compatible using Carbon ranges
+        $monthly_baa = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $start = $date->copy()->startOfMonth();
+            $end = $date->copy()->endOfMonth();
+            $count = Baa::whereBetween('createdAt', [$start, $end])->count();
+            $monthly_baa[] = (object) [
+                'month' => (int) $date->format('m'),
+                'year' => (int) $date->format('Y'),
+                'total' => $count,
+            ];
+        }
 
         // Low stock materials
         $low_stock_materials = Material::whereColumn('stok', '<=', 'minimal_stok')
