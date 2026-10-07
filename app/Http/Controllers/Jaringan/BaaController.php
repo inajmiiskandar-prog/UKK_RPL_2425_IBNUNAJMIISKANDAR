@@ -322,7 +322,7 @@ class BaaController extends Controller
             Fab::where('id_fab', $baa->id_fab)->update(['status' => 'OPEN']);
 
             // Restore ONT status
-            Ont::where('id_ont', $baa->id_ont)->update(['status' => 'TERSDIA']);
+            Ont::where('id_ont', $baa->id_ont)->update(['status' => 'TERSEDIA']);
 
             // Restore material stock
             foreach ($baa->details as $detail) {
