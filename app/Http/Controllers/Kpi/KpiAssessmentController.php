@@ -350,22 +350,17 @@ class KpiAssessmentController extends Controller
     }
 
     /**
-     * Histori KPI per user
-     * Dikelompokkan berdasarkan bulan dari created_at
+     * Histori KPI
+     * - ADMIN: melihat semua assessment (default). Parameter user_id mempersempit ke satu karyawan.
+     * - Non-ADMIN: melihat assessment diri sendiri + bawahan langsung.
+     *   Parameter user_id hanya boleh mempersempit dalam batas tersebut; diabaikan jika di luar batas.
      */
     public function history(Request $request)
     {
-        // Ambil user yang akan dilihat (default: user yang login)
-        $targetUserId = $request->user_id ?? auth()->user()->id_user;
-
-        // Admin bisa lihat user lain
-        if ($targetUserId != auth()->user()->id_user && auth()->user()->role !== 'ADMIN') {
-            $targetUserId = auth()->user()->id_user;
-        }
-
-        $targetUser = User::findOrFail($targetUserId);
-
+        $user = auth()->user();
         $periods = KpiPeriod::orderByDesc('tanggal_mulai')->get();
+
+        // Parse filter inputs
         $periodInput = $request->query('period_id');
         $periodId = is_scalar($periodInput)
             ? filter_var($periodInput, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])
@@ -379,23 +374,71 @@ class KpiAssessmentController extends Controller
             : false;
         $perPage = in_array($requestedPageSize, [10, 25, 50, 100], true) ? $requestedPageSize : 10;
 
-        // Apply period selection only after preserving the existing role-scoped user target.
-        $query = KpiAssessment::where('user_id', $targetUserId);
+        // =====================================================
+        // TENTUKAN USER SCOPE BERDASARKAN HAK AKSES
+        // =====================================================
+        $requestedUserId = $request->user_id;
+        $intUserId = $requestedUserId && is_scalar($requestedUserId)
+            ? filter_var($requestedUserId, FILTER_VALIDATE_INT)
+            : null;
+
+        if ($user->role === 'ADMIN') {
+            // ADMIN: lihat SEMUA user (termasuk nonaktif), filter hanya untuk dropdown
+            $allUserIds = User::pluck('id_user');
+            $targetUser = null; // Default: admin melihat banyak user
+            if ($intUserId && $allUserIds->contains($intUserId)) {
+                $allUserIds = collect([$intUserId]);
+                $targetUser = User::find($intUserId); // Admin filter ke satu user
+            }
+            // Dropdown hanya tampilkan user aktif
+            $allUsers = User::where('status', true)->orderBy('nama')->get();
+        } else {
+            // Non-ADMIN: diri sendiri + SEMUA bawahan langsung (termasuk nonaktif)
+            $bawahanIds = $user->bawahan()->pluck('id_user');
+            $allUserIds = $bawahanIds->push($user->id_user);
+
+            // user_id param hanya boleh mempersempit dalam batas akses
+            if ($intUserId) {
+                // Jika user_id dalam scope, filter ke user tersebut
+                if ($allUserIds->contains($intUserId)) {
+                    $allUserIds = collect([$intUserId]);
+                }
+                // Jika di luar scope,abaikan saja (tidak error, tidak bocor data)
+            }
+
+            // Multi-user mode: $targetUser = null jika scope > 1 user (tanpa filter spesifik)
+            // Single-user mode: $targetUser terisi jika filter user_id atau scope hanya 1
+            if ($allUserIds->count() === 1) {
+                $targetUser = User::find($allUserIds->first());
+            } else {
+                $targetUser = null;
+            }
+            $allUsers = collect(); // Non-admin tidak perlu dropdown semua user
+        }
+
+        // =====================================================
+        // QUERY ASSESSMENTS
+        // =====================================================
+        $query = KpiAssessment::whereIn('user_id', $allUserIds);
         if ($selectedPeriodId !== null) {
             $query->where('kpi_period_id', $selectedPeriodId);
         }
 
+        // Chart data: skor akhir per periode
         $chartAssessments = (clone $query)
             ->select(['id', 'kpi_period_id', 'skor_akhir', 'created_at'])
             ->with('period:id,nama')
             ->orderByDesc('created_at')
             ->get();
 
-        $assessments = $query->with(['user', 'period', 'atasan', 'scores'])
+        // Paginated assessments dengan eager loading untuk hindari N+1
+        $assessments = $query
+            ->with(['user', 'period', 'atasan', 'scores.skill'])
             ->orderByDesc('created_at')
             ->paginate($perPage)
             ->withQueryString();
 
+        // Hitung skor soft/hard skill untuk display
         $scoreRecords = $assessments->getCollection()->flatMap(fn (KpiAssessment $assessment) => $assessment->scores);
         foreach (['soft_skill', 'hard_skill'] as $skillType) {
             $scoresForType = new \Illuminate\Database\Eloquent\Collection(
@@ -410,20 +453,9 @@ class KpiAssessmentController extends Controller
             $assessment->setAttribute('history_hard_skill_score', $skillScores['hard_skill']);
         });
 
-        // Siapkan data untuk chart tren
-        // Label: nama periode dari period->nama
-        $chartLabels = $chartAssessments->map(function($a) {
-            return $a->period?->nama ?? $a->created_at->format('M Y');
-        })->toArray();
+        // Chart labels dan scores
+        $chartLabels = $chartAssessments->map(fn ($a) => $a->period?->nama ?? $a->created_at->format('M Y'))->toArray();
         $chartScores = $chartAssessments->pluck('skor_akhir')->toArray();
-
-        // Semua user untuk filter (hanya admin)
-        $allUsers = [];
-        if (auth()->user()->role === 'ADMIN') {
-            $allUsers = User::where('status', true)
-                           ->orderBy('nama')
-                           ->get();
-        }
 
         return view('kpi.assessment.history', compact(
             'targetUser', 'assessments', 'chartLabels', 'chartScores', 'allUsers',

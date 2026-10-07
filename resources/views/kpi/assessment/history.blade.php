@@ -8,13 +8,13 @@
 {{-- GET filters remain in the query string when navigating between pages. --}}
 <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <form method="GET" class="grid min-w-0 grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @if(auth()->user()->role === 'ADMIN' && $allUsers->count() > 0)
+        @if($allUsers->count() > 0)
         <div class="min-w-0">
             <label for="history_user_id" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Karyawan</label>
             <select id="history_user_id" name="user_id" class="w-full min-w-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                 <option value="">Semua Karyawan</option>
                 @foreach($allUsers as $u)
-                <option value="{{ $u->id_user }}" {{ $targetUser->id_user == $u->id_user ? 'selected' : '' }}>
+                <option value="{{ $u->id_user }}" {{ request('user_id') == $u->id_user ? 'selected' : '' }}>
                     {{ $u->nama }}
                 </option>
                 @endforeach
@@ -51,7 +51,8 @@
     </form>
 </div>
 
-{{-- Info User --}}
+{{-- Info User (hanya tampil jika satu user) --}}
+@if($targetUser)
 <div class="mb-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <div class="flex items-center gap-4">
         <div class="flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-xl font-bold text-purple-700 dark:bg-purple-900/30 dark:text-purple-400">
@@ -65,6 +66,7 @@
         </div>
     </div>
 </div>
+@endif
 
 {{-- Chart Section --}}
 @if(count($chartScores) > 0 && count(array_filter($chartScores)) > 0)
@@ -89,6 +91,9 @@
             <thead class="border-b border-gray-100 bg-gray-50 dark:border-slate-700 dark:bg-slate-700/50">
                 <tr>
                     <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">#</th>
+                    @if(!$targetUser)
+                    <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Nama Karyawan</th>
+                    @endif
                     <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Periode</th>
                     <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Tanggal Dibuat</th>
                     <th class="whitespace-nowrap px-3 py-3 font-semibold text-gray-600 dark:text-gray-300">Status</th>
@@ -133,6 +138,9 @@
                 @endphp
                 <tr ondblclick="window.location.href='{{ $detailUrl }}'" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700">
                     <td class="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">{{ $loop->iteration }}</td>
+                    @if(!$targetUser)
+                    <td class="whitespace-nowrap px-3 py-3 font-medium text-gray-800 dark:text-white">{{ $a->user?->nama ?? '-' }}</td>
+                    @endif
                     <td class="whitespace-nowrap px-3 py-3 font-medium text-gray-800 dark:text-white">{{ $a->period?->nama ?? '-' }}</td>
                     <td class="whitespace-nowrap px-3 py-3 text-gray-500 dark:text-gray-400">{{ $a->created_at?->format('d M Y') ?? '-' }}</td>
                     <td class="whitespace-nowrap px-3 py-3">
@@ -164,7 +172,7 @@
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="10" class="px-3 py-12 text-center"><p class="text-gray-500 dark:text-gray-400">Belum ada histori penilaian</p></td></tr>
+                <tr><td colspan="{{ !$targetUser ? '11' : '10' }}" class="px-3 py-12 text-center"><p class="text-gray-500 dark:text-gray-400">Belum ada histori penilaian</p></td></tr>
                 @endforelse
             </tbody>
         </table>
