@@ -221,6 +221,30 @@ class KpiWizardStep1DropdownTest extends TestCase
         $this->assertEquals('menunggu_review', $userData['status']);
     }
 
+    public function test_selecting_employee_waiting_for_review_opens_review_mode(): void
+    {
+        $leader = User::factory()->create(['role' => 'LEADER', 'status' => true]);
+        $teknisi = User::factory()->create([
+            'role' => 'TEKNISI',
+            'atasan_id' => $leader->id_user,
+            'status' => true,
+        ]);
+        $data = $this->setupBaseData();
+        $assessment = KpiAssessment::create([
+            'user_id' => $teknisi->id_user,
+            'kpi_period_id' => $data['period']->id,
+            'atasan_id' => $leader->id_user,
+            'status' => 'menunggu_review',
+        ]);
+
+        $this->actingAs($leader)
+            ->post(route('kpi.assessment.wizard.step1'), [
+                'period_value' => '2026-10',
+                'user_id' => $teknisi->id_user,
+            ])
+            ->assertRedirect(route('kpi.assessment.create', ['assessment_id' => $assessment->id]));
+    }
+
     public function test_employee_with_sudah_dicek_status_shows_disabled(): void
     {
         $leader = User::factory()->create(['role' => 'LEADER', 'status' => true]);
@@ -366,6 +390,69 @@ class KpiWizardStep1DropdownTest extends TestCase
 
         $response->assertRedirect();
         $response->assertSessionHas('error', 'Karyawan yang dipilih tidak valid atau di luar hak akses Anda!');
+    }
+
+    public function test_unknown_period_keeps_legacy_redirect_to_self_assessment(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $user = User::factory()->create(['status' => true]);
+
+        $this->actingAs($admin)
+            ->post(route('kpi.assessment.wizard.step1'), [
+                'period_value' => '2026-09',
+                'user_id' => $user->id_user,
+            ])
+            ->assertRedirect(route('kpi.assessment.self'));
+    }
+
+    public function test_get_step1_does_not_create_a_period_for_unknown_month(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $this->setupBaseData();
+        $periodCount = KpiPeriod::count();
+
+        $response = $this->actingAs($admin)->get(route('kpi.assessment.create', [
+            'period_value' => '2026-11',
+        ]));
+
+        $response->assertOk();
+        $this->assertSame($periodCount, KpiPeriod::count());
+        $this->assertTrue($response->viewData('employeeData')->every(fn ($employee) => $employee['disabled']));
+    }
+
+    public function test_employee_status_badge_uses_the_selected_period(): void
+    {
+        $admin = User::factory()->create(['role' => 'ADMIN', 'status' => true]);
+        $user = User::factory()->create(['status' => true]);
+        $data = $this->setupBaseData();
+        $november = KpiPeriod::create([
+            'nama' => 'KPI November 2026',
+            'tanggal_mulai' => '2026-11-01',
+            'tanggal_selesai' => '2026-11-30',
+            'status' => 'aktif',
+        ]);
+        KpiAssessment::create([
+            'user_id' => $user->id_user,
+            'kpi_period_id' => $data['period']->id,
+            'status' => 'menunggu_review',
+        ]);
+
+        $octoberResponse = $this->actingAs($admin)->get(route('kpi.assessment.create', [
+            'period_value' => '2026-10',
+        ]));
+        $octoberEmployee = $octoberResponse->viewData('employeeData')->firstWhere('id_user', $user->id_user);
+
+        $novemberResponse = $this->get(route('kpi.assessment.create', [
+            'period_value' => '2026-11',
+        ]));
+        $novemberEmployee = $novemberResponse->viewData('employeeData')->firstWhere('id_user', $user->id_user);
+
+        $this->assertSame('menunggu_review', $octoberEmployee['status']);
+        $this->assertFalse($octoberEmployee['disabled']);
+        $this->assertSame('no_record', $novemberEmployee['status']);
+        $this->assertTrue($novemberEmployee['disabled']);
+        $this->assertSame($november->id, $novemberResponse->viewData('activePeriod')->id);
+        $novemberResponse->assertSee('value="2026-11"', false);
     }
 
     // =====================================================

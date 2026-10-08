@@ -79,7 +79,7 @@
                     Periode Penilaian (YYYY-MM) <span class="text-red-500">*</span>
                 </label>
                 <input type="month" name="period_value" id="period_value" required
-                       value="{{ old('period_value', $wizardData['period_value'] ?? $periodValue ?? '') }}"
+                      value="{{ $periodValue }}"
                        class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white">
                 @error('period_value')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -93,7 +93,7 @@
                 </label>
 
                 {{-- Hidden input untuk form submission --}}
-                <input type="hidden" name="user_id" id="selected_user_id" value="{{ old('user_id', $wizardData['user_id'] ?? '') }}">
+                <input type="hidden" name="user_id" id="selected_user_id" value="{{ $wizardData['user_id'] }}">
 
                 {{-- Custom Dropdown Trigger --}}
                 <div class="relative" id="employee-dropdown-container">
@@ -184,6 +184,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const dropdownPlaceholder = document.getElementById('dropdown-placeholder');
     const dropdownSelected = document.getElementById('dropdown-selected');
     const dropdownArrow = document.getElementById('dropdown-arrow');
+    const periodInput = document.getElementById('period_value');
+
+    periodInput.addEventListener('change', function() {
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set('period_value', this.value);
+
+        const selectedId = document.getElementById('selected_user_id').value;
+        if (selectedId) {
+            nextUrl.searchParams.set('user_id', selectedId);
+        } else {
+            nextUrl.searchParams.delete('user_id');
+        }
+
+        window.location.assign(nextUrl.toString());
+    });
 
     let focusedIndex = -1;
     let filteredEmployees = [...employees];

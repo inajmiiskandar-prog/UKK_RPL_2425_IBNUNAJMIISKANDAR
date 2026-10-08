@@ -537,11 +537,7 @@ class KpiAssessmentController extends Controller
         }
     }
 
-    /**
-     * Legacy method body is retained below for route compatibility.
-     * NOTE: Legacy mode sekarang mengalihkan ke self-assessment, tapi view tetap dirender
-     * dengan dropdown karyawan (Step 1 baru) untuk menampilkan status self-assessment.
-     */
+    /** Build employee dropdown data for wizard Step 1. */
     private function legacyWizardStep1(Request $request)
     {
         $user = auth()->user();
@@ -568,22 +564,33 @@ class KpiAssessmentController extends Controller
         // Ambil data session jika ada (langkah sebelumnya)
         $wizardData = session('kpi_wizard', []);
 
-        // Ambil periode aktif untuk filter status
-        $periodValue = old('period_value', $wizardData['period_value'] ?? '');
-        $activePeriod = $this->getOrCreateCurrentPeriod();
+        // GET Step 1 only looks up an existing period; it must not create one.
+        $periodValue = $request->query(
+            'period_value',
+            old('period_value', $wizardData['period_value'] ?? now()->format('Y-m'))
+        );
+        $wizardData['period_value'] = $periodValue;
+        $wizardData['user_id'] = $request->query(
+            'user_id',
+            old('user_id', $wizardData['user_id'] ?? '')
+        );
+        $period = null;
+        if (is_string($periodValue) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $periodValue)) {
+            [$year, $month] = explode('-', $periodValue);
+            $period = KpiPeriod::whereYear('tanggal_mulai', $year)
+                ->whereMonth('tanggal_mulai', $month)
+                ->first();
+        }
 
         // Hitung status self-assessment untuk SEMUA karyawan dalam SATU query
         // Ini menghindari N+1 problem
         $userIds = $employees->pluck('id_user')->toArray();
-        $periodId = $activePeriod->id ?? null;
+        $periodId = $period?->id;
 
         $assessmentStatuses = [];
         if (!empty($userIds) && $periodId) {
             $assessments = KpiAssessment::whereIn('user_id', $userIds)
                 ->where('kpi_period_id', $periodId)
-                ->with(['selfScores' => function ($q) {
-                    $q->select('kpi_assessment_id'); // Hanya perlu exists, tidak perlu data lengkap
-                }])
                 ->get()
                 ->keyBy('user_id');
 
@@ -656,7 +663,7 @@ class KpiAssessmentController extends Controller
             'wizardData' => $wizardData,
             'hasBawahan' => $hasBawahan,
             'periodValue' => $periodValue,
-            'activePeriod' => $activePeriod,
+            'activePeriod' => $period,
         ]);
     }
 
@@ -735,6 +742,10 @@ class KpiAssessmentController extends Controller
                 if ($error) {
                     return redirect()->back()->withInput()->with('error', $error);
                 }
+
+                return redirect()->route('kpi.assessment.create', [
+                    'assessment_id' => $assessment->id,
+                ]);
             }
         }
 
