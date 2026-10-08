@@ -38,6 +38,9 @@ class KpiAssessmentController extends Controller
         // Auto-create periode untuk bulan berjalan jika belum ada
         $activePeriod = $this->getOrCreateCurrentPeriod();
 
+        // Direct reports control access to the employee-rating wizard link.
+        $hasDirectSubordinates = $user->bawahan()->exists();
+
         // Cek apakah user ini punya bawahan langsung (untuk show/hide tab review)
         $hasBawahan = $user->bawahan()->whereHas('kpiAssessments', function ($query) use ($activePeriod) {
             $query->where('kpi_period_id', $activePeriod->id)
@@ -69,7 +72,7 @@ class KpiAssessmentController extends Controller
         }
 
         return view('kpi.assessment.index', compact(
-            'user', 'hasBawahan', 'bawahans', 'myAssessment', 'myScores', 'activePeriod'
+            'user', 'hasBawahan', 'hasDirectSubordinates', 'bawahans', 'myAssessment', 'myScores', 'activePeriod'
         ));
     }
 

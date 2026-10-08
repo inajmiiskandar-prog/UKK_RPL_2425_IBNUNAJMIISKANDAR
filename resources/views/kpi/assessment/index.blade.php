@@ -126,6 +126,12 @@
 
 {{-- Link ke Halaman Lain --}}
 <div class="mt-6 flex flex-wrap gap-3">
+    @if(auth()->user()->role === 'ADMIN' || $hasDirectSubordinates)
+    <a href="{{ route('kpi.assessment.create') }}" class="inline-flex min-h-10 items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-medium text-orange-700 hover:bg-orange-100 dark:border-orange-900/60 dark:bg-orange-900/20 dark:text-orange-300 dark:hover:bg-orange-900/40">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2m12-13a4 4 0 11-8 0 4 4 0 018 0zm2 4h6m-3-3v6"/></svg>
+        Nilai Karyawan
+    </a>
+    @endif
     <a href="{{ route('kpi.assessment.history') }}" class="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-300 dark:hover:bg-slate-700">
         Histori KPI Saya
     </a>
