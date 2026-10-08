@@ -74,14 +74,14 @@
                 </div>
                   <div class="flex items-center gap-3 sm:gap-4">
                       <div class="relative min-w-0 flex-1 pt-7" data-score-control>
-                       <output data-score-bubble class="pointer-events-none absolute top-0 left-0 z-10 min-w-9 -translate-x-1/2 rounded-md bg-purple-700 px-2 py-1 text-center text-xs font-semibold text-white dark:bg-purple-500">{{ old("scores.soft_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}</output>
-                       <input type="range" id="range-soft-{{ $skill->id }}" min="1" max="100" value="{{ old("scores.soft_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}"
+                                             <output data-score-bubble class="pointer-events-none absolute top-0 left-0 z-10 min-w-9 -translate-x-1/2 whitespace-nowrap rounded-md bg-purple-700 px-2 py-1 text-center text-xs font-semibold text-white dark:bg-purple-500">{{ old("scores.soft_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}</output>
+                                             <input type="range" id="range-soft-{{ $skill->id }}" min="1" max="100" value="{{ old("scores.soft_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}"
                            class="block h-8 w-full cursor-pointer appearance-none bg-transparent"
-                           data-score-range data-number-input="score-val-{{ $skill->id }}">
+                                                     data-score-range data-number-input="score-val-{{ $skill->id }}"
+                                                     aria-label="{{ $skill->nama_indikator }}" aria-valuenow="{{ old("scores.soft_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}">
                       </div>
-                    <input type="number" name="scores[soft_skill][{{ $skill->id }}]" min="1" max="100"
-                          value="{{ old("scores.soft_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}"
-                          class="w-16 shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-2 py-2 text-center text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        <input type="hidden" name="scores[soft_skill][{{ $skill->id }}]"
+                                                    value="{{ old("scores.soft_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}"
                            id="score-val-{{ $skill->id }}">
                 </div>
                 <div class="mt-2">
@@ -126,14 +126,14 @@
                 </div>
                   <div class="flex items-center gap-3 sm:gap-4">
                       <div class="relative min-w-0 flex-1 pt-7" data-score-control>
-                       <output data-score-bubble class="pointer-events-none absolute top-0 left-0 z-10 min-w-9 -translate-x-1/2 rounded-md bg-purple-700 px-2 py-1 text-center text-xs font-semibold text-white dark:bg-purple-500">{{ old("scores.hard_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}</output>
+                                             <output data-score-bubble class="pointer-events-none absolute top-0 left-0 z-10 min-w-9 -translate-x-1/2 whitespace-nowrap rounded-md bg-purple-700 px-2 py-1 text-center text-xs font-semibold text-white dark:bg-purple-500">{{ old("scores.hard_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}</output>
                        <input type="range" id="range-hard-{{ $skill->id }}" min="1" max="100" value="{{ old("scores.hard_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}"
                            class="block h-8 w-full cursor-pointer appearance-none bg-transparent"
-                           data-score-range data-number-input="score-val-hard-{{ $skill->id }}">
+                                                     data-score-range data-number-input="score-val-hard-{{ $skill->id }}"
+                                                     aria-label="{{ $skill->kpi }}" aria-valuenow="{{ old("scores.hard_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}">
                       </div>
-                    <input type="number" name="scores[hard_skill][{{ $skill->id }}]" min="1" max="100"
-                          value="{{ old("scores.hard_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}"
-                          class="w-16 shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-2 py-2 text-center text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        <input type="hidden" name="scores[hard_skill][{{ $skill->id }}]"
+                                                    value="{{ old("scores.hard_skill.{$skill->id}", $selfScores->get($skill->id)?->skor ?? 50) }}"
                            id="score-val-hard-{{ $skill->id }}">
                 </div>
                 <div class="mt-2">
@@ -188,6 +188,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         bubble.textContent = slider.value;
         bubble.style.left = `${thumbRadius + usableWidth * ratio}px`;
+        slider.setAttribute('aria-valuenow', slider.value);
     }
 
     sliders.forEach(function(slider) {
