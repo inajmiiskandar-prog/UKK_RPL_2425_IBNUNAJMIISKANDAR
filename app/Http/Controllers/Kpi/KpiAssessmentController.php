@@ -509,7 +509,7 @@ class KpiAssessmentController extends Controller
 
         if ($assessmentId) {
             // Mode 1: Review mode - Atasan mereview assessment bawahan
-            $assessment = KpiAssessment::with('user')->findOrFail($assessmentId);
+            $assessment = KpiAssessment::with(['user', 'period'])->findOrFail($assessmentId);
             $this->authorizeAtasanReview($assessment);
 
             if ($assessment->status !== 'menunggu_review') {
@@ -539,6 +539,8 @@ class KpiAssessmentController extends Controller
 
     /**
      * Legacy method body is retained below for route compatibility.
+     * NOTE: Legacy mode sekarang mengalihkan ke self-assessment, tapi view tetap dirender
+     * dengan dropdown karyawan (Step 1 baru) untuk menampilkan status self-assessment.
      */
     private function legacyWizardStep1(Request $request)
     {
@@ -546,13 +548,19 @@ class KpiAssessmentController extends Controller
 
         // Admin bisa pilih semua karyawan, user lain hanya bawahan langsung + diri sendiri
         if ($user->role === 'ADMIN') {
-            $employees = User::where('status', true)->orderBy('nama')->get();
+            $employeesQuery = User::where('status', true)->orderBy('nama');
         } else {
-            // Ambil bawahan langsung
-            $employees = $user->bawahan()->where('status', true)->orderBy('nama')->get();
-            // Tambahkan diri sendiri
-            $employees = $employees->push($user)->sortBy('nama')->values();
+            // Ambil bawahan langsung + diri sendiri
+            $employeesQuery = User::where('status', true)
+                ->where(function ($q) use ($user) {
+                    $q->where('atasan_id', $user->id_user)
+                      ->orWhere('id_user', $user->id_user);
+                })
+                ->orderBy('nama');
         }
+
+        // Eager load relasi untuk hindari N+1
+        $employees = $employeesQuery->with('atasan')->get();
 
         // Cek apakah user punya bawahan (lebih dari 1 pilihan karyawan)
         $hasBawahan = $employees->count() > 1;
@@ -560,7 +568,96 @@ class KpiAssessmentController extends Controller
         // Ambil data session jika ada (langkah sebelumnya)
         $wizardData = session('kpi_wizard', []);
 
-        return view('kpi.assessment.wizard-step1', compact('employees', 'wizardData', 'hasBawahan'));
+        // Ambil periode aktif untuk filter status
+        $periodValue = old('period_value', $wizardData['period_value'] ?? '');
+        $activePeriod = $this->getOrCreateCurrentPeriod();
+
+        // Hitung status self-assessment untuk SEMUA karyawan dalam SATU query
+        // Ini menghindari N+1 problem
+        $userIds = $employees->pluck('id_user')->toArray();
+        $periodId = $activePeriod->id ?? null;
+
+        $assessmentStatuses = [];
+        if (!empty($userIds) && $periodId) {
+            $assessments = KpiAssessment::whereIn('user_id', $userIds)
+                ->where('kpi_period_id', $periodId)
+                ->with(['selfScores' => function ($q) {
+                    $q->select('kpi_assessment_id'); // Hanya perlu exists, tidak perlu data lengkap
+                }])
+                ->get()
+                ->keyBy('user_id');
+
+            foreach ($userIds as $userId) {
+                $assessment = $assessments->get($userId);
+                if (!$assessment) {
+                    // Tidak ada assessment sama sekali = "belum mengisi"
+                    $assessmentStatuses[$userId] = [
+                        'status' => 'no_record',
+                        'badge' => 'Belum mengisi Self-Assessment',
+                        'disabled' => true,
+                    ];
+                } elseif ($assessment->status === 'menunggu_review') {
+                    // Self-assessment sudah, menunggu review = bisa dipilih
+                    $assessmentStatuses[$userId] = [
+                        'status' => 'menunggu_review',
+                        'badge' => 'Menunggu Review',
+                        'disabled' => false,
+                    ];
+                } elseif (in_array($assessment->status, ['sudah_dicek', 'selesai'])) {
+                    // Sudah dinilai atasan = disabled
+                    $assessmentStatuses[$userId] = [
+                        'status' => 'done',
+                        'badge' => 'Sudah dinilai',
+                        'disabled' => true,
+                    ];
+                } else {
+                    // pending, self_done, dll = belum mengisi lengkap (disabled)
+                    $assessmentStatuses[$userId] = [
+                        'status' => 'pending',
+                        'badge' => 'Belum mengisi Self-Assessment',
+                        'disabled' => true,
+                    ];
+                }
+            }
+        } else {
+            // Tidak ada periode atau userIds kosong - semua disabled
+            foreach ($userIds as $userId) {
+                $assessmentStatuses[$userId] = [
+                    'status' => 'no_period',
+                    'badge' => 'Belum mengisi Self-Assessment',
+                    'disabled' => true,
+                ];
+            }
+        }
+
+        // Encode ke JSON untuk JavaScript
+        $employeeData = $employees->map(function ($emp) use ($assessmentStatuses, $user) {
+            // Avatar: gunakan inisial nama
+            $initials = strtoupper(substr($emp->nama ?? 'U', 0, 2));
+            $isCurrentUser = $emp->id_user === $user->id_user;
+
+            return [
+                'id_user' => $emp->id_user,
+                'nama' => $emp->nama ?? '-',
+                'nik' => $emp->nik ?? '-',
+                'divisi' => $emp->divisi ?? '-',
+                'jabatan' => $emp->jabatan ?? '-',
+                'initials' => $initials,
+                'is_current_user' => $isCurrentUser,
+                'status' => $assessmentStatuses[$emp->id_user]['status'] ?? 'unknown',
+                'badge' => $assessmentStatuses[$emp->id_user]['badge'] ?? '-',
+                'disabled' => $assessmentStatuses[$emp->id_user]['disabled'] ?? true,
+            ];
+        });
+
+        return view('kpi.assessment.wizard-step1', [
+            'employees' => $employees,
+            'employeeData' => $employeeData,
+            'wizardData' => $wizardData,
+            'hasBawahan' => $hasBawahan,
+            'periodValue' => $periodValue,
+            'activePeriod' => $activePeriod,
+        ]);
     }
 
     /**
@@ -594,13 +691,54 @@ class KpiAssessmentController extends Controller
             return redirect()->route('kpi.assessment.wizard.step2');
         }
 
-        // Mode 2: Legacy mode - Wizard ini sekarang HANYA untuk review.
-        // Untuk buat assessment baru, redirect ke self-assessment page
-        \Log::info('WIZARD STEP 1 POST - Legacy mode detected, redirecting to self-assessment', [
-            'user_id' => auth()->user()->id_user ?? 'null',
-            'role' => auth()->user()->role ?? 'null',
-        ]);
+        // Apply dropdown validation only when the submitted period exists.
+        $periodValue = $request->input('period_value');
+        if ($periodValue && preg_match('/^\d{4}-\d{2}$/', $periodValue)) {
+            [$year, $month] = explode('-', $periodValue);
+            $period = KpiPeriod::whereYear('tanggal_mulai', $year)
+                ->whereMonth('tanggal_mulai', $month)
+                ->first();
 
+            if ($period) {
+                $user = auth()->user();
+                $selectedUserId = (int) $request->input('user_id');
+                $validUserQuery = User::where('id_user', $selectedUserId)
+                    ->where('status', true);
+
+                if ($user->role !== 'ADMIN') {
+                    $validUserQuery->where(function ($query) use ($user) {
+                        $query->where('atasan_id', $user->id_user)
+                            ->orWhere('id_user', $user->id_user);
+                    });
+                }
+
+                if (!$validUserQuery->exists()) {
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Karyawan yang dipilih tidak valid atau di luar hak akses Anda!');
+                }
+
+                $assessment = KpiAssessment::where('user_id', $selectedUserId)
+                    ->where('kpi_period_id', $period->id)
+                    ->first();
+
+                if (!$assessment) {
+                    $error = 'Karyawan ini belum mengisi Self-Assessment.';
+                } elseif (in_array($assessment->status, ['sudah_dicek', 'selesai'], true)) {
+                    $error = 'Karyawan ini sudah dinilai oleh atasan.';
+                } elseif ($assessment->status !== 'menunggu_review') {
+                    $error = 'Karyawan ini belum menyelesaikan Self-Assessment.';
+                } else {
+                    $error = null;
+                }
+
+                if ($error) {
+                    return redirect()->back()->withInput()->with('error', $error);
+                }
+            }
+        }
+
+        // Legacy mode: redirect ke self-assessment
         return redirect()->route('kpi.assessment.self')
             ->with('info', 'Untuk membuat penilaian baru, gunakan menu Self-Assessment.');
     }
