@@ -51,6 +51,24 @@ class KpiAssessmentScore extends Model
     }
 
     /**
+     * Accessor: ambil bobot hard skill langsung jika ini skor hard skill.
+     * Helper agar controller tidak perlu resolve relasi polymorphic.
+     */
+    public function getHardSkillWeightAttribute(): ?float
+    {
+        if ($this->skill_type !== 'hard_skill') {
+            return null;
+        }
+
+        if ($this->relationLoaded('skill')) {
+            return $this->skill?->weight ?? null;
+        }
+
+        // Fallback: lazy load relasi jika belum di-load
+        return $this->skill?->weight ?? null;
+    }
+
+    /**
      * Scope untuk soft skill saja
      */
     public function scopeSoftSkill($query)

@@ -27,6 +27,8 @@ class KpiReportController extends Controller
         'periode' => 'Periode',
         'skor_soft_skill' => 'Skor Soft Skill',
         'skor_hard_skill' => 'Skor Hard Skill',
+        'skor_self' => 'Skor Self',
+        'skor_atasan' => 'Skor Atasan',
         'skor_akhir' => 'Skor Akhir',
         'grade' => 'Grade',
         'status' => 'Status',
@@ -73,7 +75,8 @@ class KpiReportController extends Controller
 
     private function assessmentsForPeriod(KpiPeriod $period): EloquentCollection
     {
-        return KpiAssessment::with(['user', 'atasan', 'period'])
+        // Eager load scores + skill untuk avoid N+1 query saat hitung Skor Self/Atasan
+        return KpiAssessment::with(['user', 'atasan', 'period', 'scores.skill'])
             ->where('kpi_period_id', $period->id)
             ->whereIn('status', ['sudah_dicek', 'selesai'])
             ->orderBy(
@@ -100,12 +103,100 @@ class KpiReportController extends Controller
                 'periode' => $assessment->period->nama ?? $period->nama,
                 'skor_soft_skill' => $this->formatScore($scores['soft_skill']),
                 'skor_hard_skill' => $this->formatScore($scores['hard_skill']),
+                'skor_self' => $this->formatScore($this->calculateSelfScore($assessment)),
+                'skor_atasan' => $this->formatScore($this->calculateAtasanScore($assessment)),
                 'skor_akhir' => $this->formatScore($assessment->skor_akhir),
                 'grade' => $assessment->grade(),
                 'status' => $assessment->status,
                 'disetujui_oleh' => $assessment->atasan->nama ?? '-',
             ];
         })->all();
+    }
+
+    /**
+     * Hitung Skor Self: rata-rata soft skill + weighted average hard skill
+     * dari penilai_type='karyawan' saja.
+     */
+    private function calculateSelfScore(KpiAssessment $assessment): ?float
+    {
+        $softScores = $assessment->scores
+            ->where('penilai_type', 'karyawan')
+            ->where('skill_type', 'soft_skill');
+
+        $hardScores = $assessment->scores
+            ->where('penilai_type', 'karyawan')
+            ->where('skill_type', 'hard_skill');
+
+        $avgSoft = $softScores->count() > 0 ? $softScores->avg('skor') : null;
+        $avgHard = $this->calculateWeightedAverageHardSkillSelf($hardScores);
+
+        if ($avgSoft === null && $avgHard === null) {
+            return null;
+        }
+        if ($avgSoft === null) {
+            return $avgHard;
+        }
+        if ($avgHard === null) {
+            return $avgSoft;
+        }
+
+        return ($avgSoft + $avgHard) / 2;
+    }
+
+    /**
+     * Hitung Skor Atasan: rata-rata soft skill + weighted average hard skill
+     * dari penilai_type='atasan' saja.
+     */
+    private function calculateAtasanScore(KpiAssessment $assessment): ?float
+    {
+        $softScores = $assessment->scores
+            ->where('penilai_type', 'atasan')
+            ->where('skill_type', 'soft_skill');
+
+        $hardScores = $assessment->scores
+            ->where('penilai_type', 'atasan')
+            ->where('skill_type', 'hard_skill');
+
+        $avgSoft = $softScores->count() > 0 ? $softScores->avg('skor') : null;
+        $avgHard = $this->calculateWeightedAverageHardSkillSelf($hardScores);
+
+        if ($avgSoft === null && $avgHard === null) {
+            return null;
+        }
+        if ($avgSoft === null) {
+            return $avgHard;
+        }
+        if ($avgHard === null) {
+            return $avgSoft;
+        }
+
+        return ($avgSoft + $avgHard) / 2;
+    }
+
+    /**
+     * Weighted average untuk hard skill dari koleksi skor yang sudah di-eager-load.
+     * Weight diambil dari relasi hardSkill yang sudah di-load.
+     */
+    private function calculateWeightedAverageHardSkillSelf($scores): ?float
+    {
+        $weightedSum = 0;
+        $totalWeight = 0;
+
+        foreach ($scores as $score) {
+            // Pakai accessor hardSkillWeight (auto-resolve polymorphic)
+            $weight = $score->hardSkillWeight;
+            if ($weight === null || $weight <= 0) {
+                continue;
+            }
+            $weightedSum += $score->skor * $weight;
+            $totalWeight += $weight;
+        }
+
+        if ($totalWeight <= 0) {
+            return null;
+        }
+
+        return $weightedSum / $totalWeight;
     }
 
     private function reportStats(EloquentCollection $assessments): array

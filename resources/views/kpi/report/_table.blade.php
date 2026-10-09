@@ -1,6 +1,6 @@
 <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <div class="overflow-x-auto">
-        <table class="min-w-[1200px] w-full text-left text-sm">
+        <table class="min-w-[1400px] w-full text-left text-sm">
             <thead class="border-b border-gray-100 bg-gray-50 dark:border-slate-700 dark:bg-slate-700/50">
                 <tr>
                     @foreach($columns as $label)
@@ -25,7 +25,7 @@
                     @endphp
                     <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/60">
                         @foreach($columns as $key => $label)
-                            <td class="whitespace-nowrap px-4 py-3 {{ in_array($key, ['skor_soft_skill', 'skor_hard_skill', 'skor_akhir'], true) ? 'text-right tabular-nums' : 'text-gray-600 dark:text-gray-300' }}">
+                            <td class="whitespace-nowrap px-4 py-3 {{ in_array($key, ['skor_soft_skill', 'skor_hard_skill', 'skor_self', 'skor_atasan', 'skor_akhir'], true) ? 'text-right tabular-nums' : 'text-gray-600 dark:text-gray-300' }}">
                                 @if($key === 'grade')
                                     <span class="inline-flex min-w-8 justify-center rounded-full px-2 py-0.5 text-xs font-semibold {{ $gradeClass }}">{{ $row[$key] }}</span>
                                 @elseif($key === 'status')

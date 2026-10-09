@@ -138,7 +138,8 @@ class KpiReportExportTest extends TestCase
 
         $headers = [
             'No', 'NIK', 'Nama Karyawan', 'Divisi', 'Jabatan', 'Periode',
-            'Skor Soft Skill', 'Skor Hard Skill', 'Skor Akhir', 'Grade', 'Status', 'Disetujui Oleh',
+            'Skor Soft Skill', 'Skor Hard Skill', 'Skor Self', 'Skor Atasan',
+            'Skor Akhir', 'Grade', 'Status', 'Disetujui Oleh',
         ];
         $csvResponse = $this->actingAs($admin)->get(route('kpi.report.exportCsv', $period->id));
         $csvResponse->assertOk();
@@ -146,9 +147,11 @@ class KpiReportExportTest extends TestCase
 
         $this->assertCount(2, $csvLines);
         $this->assertSame($headers, str_getcsv($csvLines[0]));
+        // Skor Self: avg(soft_karyawan) & weighted(hard_karyawan) → (80+90)/2=85
+        // Skor Atasan: avg(soft_atasan) & weighted(hard_atasan) → (60+80)/2=70
         $this->assertSame([
             '1', 'NIK-007', 'Karyawan Contoh', 'IT', 'Engineer', 'Periode Test',
-            '70.00', '85.00', '82.25', 'B', 'sudah_dicek', 'Leader Utama',
+            '70.00', '85.00', '85.00', '70.00', '82.25', 'B', 'sudah_dicek', 'Leader Utama',
         ], str_getcsv($csvLines[1]));
 
         $excelResponse = $this->get(route('kpi.report.exportExcel', $period->id));
@@ -217,7 +220,8 @@ class KpiReportExportTest extends TestCase
         $this->createAssessment($excluded, $period, 'pending', null);
         $expectedHeaders = [
             'No', 'NIK', 'Nama Karyawan', 'Divisi', 'Jabatan', 'Periode',
-            'Skor Soft Skill', 'Skor Hard Skill', 'Skor Akhir', 'Grade', 'Status', 'Disetujui Oleh',
+            'Skor Soft Skill', 'Skor Hard Skill', 'Skor Self', 'Skor Atasan',
+            'Skor Akhir', 'Grade', 'Status', 'Disetujui Oleh',
         ];
 
         $indexResponse = $this->actingAs($admin)->get(route('kpi.report.index', ['period_id' => $period->id]));
