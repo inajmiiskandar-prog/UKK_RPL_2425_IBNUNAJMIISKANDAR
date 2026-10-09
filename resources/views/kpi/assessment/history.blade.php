@@ -5,6 +5,14 @@
 @section('page-breadcrumb', 'KPI / Histori')
 
 @section('content')
+{{-- Tombol kembali ke halaman utama Penilaian KPI --}}
+<div class="mb-4">
+    <a href="{{ route('kpi.assessment.index') }}" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-purple-600 dark:text-gray-400">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Kembali
+    </a>
+</div>
+
 {{-- GET filters remain in the query string when navigating between pages. --}}
 <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
     <form method="GET" class="grid min-w-0 grid-cols-1 items-end gap-4 sm:grid-cols-2 xl:grid-cols-4">
