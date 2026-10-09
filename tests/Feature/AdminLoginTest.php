@@ -11,6 +11,22 @@ class AdminLoginTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_login_page_has_autocomplete_off_on_username(): void
+    {
+        $response = $this->get('/login');
+        $response->assertStatus(200);
+
+        $response->assertSee('autocomplete="off"', false);
+    }
+
+    public function test_login_page_has_autocomplete_new_password_on_password(): void
+    {
+        $response = $this->get('/login');
+        $response->assertStatus(200);
+
+        $response->assertSee('autocomplete="new-password"', false);
+    }
+
     public function test_admin_can_login_with_default_seeded_credentials(): void
     {
         $this->seed(UserSeeder::class);

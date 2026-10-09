@@ -205,7 +205,9 @@
                                 class="form-input h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-4 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:border-fuchsia-400 focus:bg-white focus:ring-4 focus:ring-fuchsia-500/10 focus:outline-none sm:pl-11"
                                 required
                                 autofocus
-                                autocomplete="username"
+                                autocomplete="off"
+                                autocapitalize="off"
+                                spellcheck="false"
                             >
                         </div>
                         <p class="mt-2 text-xs text-slate-500">
@@ -228,7 +230,7 @@
                                 placeholder="Masukkan password"
                                 class="form-input h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 pl-11 pr-12 text-sm text-slate-800 transition-all placeholder:text-slate-400 focus:border-fuchsia-400 focus:bg-white focus:ring-4 focus:ring-fuchsia-500/10 focus:outline-none sm:pr-4"
                                 required
-                                autocomplete="current-password"
+                                autocomplete="new-password"
                             >
                             <button
                                 type="button"
