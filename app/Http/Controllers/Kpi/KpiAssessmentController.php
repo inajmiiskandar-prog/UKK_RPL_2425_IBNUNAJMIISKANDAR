@@ -146,8 +146,10 @@ class KpiAssessmentController extends Controller
                                      ->get();
         }
 
-        // Ambil skor existing
-        $selfScores = $assessment ? $assessment->selfScores()->get()->keyBy('skill_id') : collect();
+        // Ambil skor existing - key by skill_type:skill_id untuk hindari tabrakan id
+        $selfScores = $assessment ? $assessment->selfScores()->get()->keyBy(function ($score) {
+            return $score->skill_type . ':' . $score->skill_id;
+        }) : collect();
 
         return view('kpi.assessment.self-assessment', compact(
             'assessment', 'softSkills', 'hardSkills', 'selfScores'
@@ -338,12 +340,38 @@ class KpiAssessmentController extends Controller
 
     /**
      * Detail assessment (view only, setelah selesai)
+     *
+     * Note: $assessment->load('scores.skill') tidak bekerja benar dengan polymorphic-like
+     * skill() method karena constraint skill_type tidak diterapkan saat eager loading.
+     * Solusi: load skill secara manual berdasarkan skill_type.
      */
     public function show(KpiAssessment $assessment)
     {
-        $assessment->load(['user', 'atasan', 'scores.skill']);
+        // Eager load relasi dasar + period
+        $assessment->load(['user', 'atasan', 'period', 'scores']);
 
-        // Kelompokkan skor berdasarkan tipe
+        // Load skill secara manual per skill_type untuk hindari ambiguity ID
+        // Soft dan Hard skill bisa punya ID yang sama, jadi kita pisahkan query-nya
+        $softSkillIds = $assessment->scores->where('skill_type', 'soft_skill')->pluck('skill_id')->unique();
+        $hardSkillIds = $assessment->scores->where('skill_type', 'hard_skill')->pluck('skill_id')->unique();
+
+        $softSkills = $softSkillIds->isNotEmpty()
+            ? KpiSoftSkill::whereIn('id', $softSkillIds)->get()->keyBy('id')
+            : collect();
+        $hardSkills = $hardSkillIds->isNotEmpty()
+            ? KpiHardSkill::whereIn('id', $hardSkillIds)->get()->keyBy('id')
+            : collect();
+
+        // Attach skill object ke setiap score berdasarkan skill_type
+        foreach ($assessment->scores as $score) {
+            if ($score->skill_type === 'soft_skill') {
+                $score->setRelation('skill', $softSkills->get($score->skill_id));
+            } else {
+                $score->setRelation('skill', $hardSkills->get($score->skill_id));
+            }
+        }
+
+        // Kelompokkan skor berdasarkan tipe penilai
         $selfScores = $assessment->scores->where('penilai_type', 'karyawan');
         $atasanScores = $assessment->scores->where('penilai_type', 'atasan');
 
@@ -794,7 +822,10 @@ class KpiAssessmentController extends Controller
         }
 
         $assessment = KpiAssessment::with('selfScores')->findOrFail($wizardData['assessment_id']);
-        $selfScores = $assessment->selfScores->keyBy('skill_id');
+        // Key by skill_type:skill_id to avoid collisions between soft/hard skills with same id
+        $selfScores = $assessment->selfScores->keyBy(function ($score) {
+            return $score->skill_type . ':' . $score->skill_id;
+        });
 
         return view('kpi.assessment.wizard-step2', compact('wizardData', 'softSkills', 'assessment', 'selfScores'));
     }
@@ -860,7 +891,10 @@ class KpiAssessmentController extends Controller
         }
 
         $assessment = KpiAssessment::with('selfScores')->findOrFail($wizardData['assessment_id']);
-        $selfScores = $assessment->selfScores->keyBy('skill_id');
+        // Key by skill_type:skill_id to avoid collisions between soft/hard skills with same id
+        $selfScores = $assessment->selfScores->keyBy(function ($score) {
+            return $score->skill_type . ':' . $score->skill_id;
+        });
 
         return view('kpi.assessment.wizard-step3', [
             'wizardData' => $wizardData,

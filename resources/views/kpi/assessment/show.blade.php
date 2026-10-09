@@ -78,7 +78,7 @@
     <div class="grid gap-3 sm:grid-cols-2">
         @foreach($selfScores as $score)
         <div class="flex items-center justify-between rounded-lg border border-blue-100 bg-blue-50/50 p-3 dark:border-blue-900 dark:bg-blue-900/20">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ $score->skill->nama_indikator ?? 'Unknown' }}</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ $score->skill_type === 'soft_skill' ? $score->skill->nama_indikator : ($score->skill->kpi ?? $score->skill->nama_indikator ?? 'Unknown') }}</span>
             <span class="font-semibold text-blue-700 dark:text-blue-400">{{ $score->skor }}</span>
         </div>
         @endforeach
@@ -91,12 +91,20 @@
 {{-- Perbandingan Self vs Atasan per Indikator --}}
 @if($selfScores->count() > 0 || $atasanScores->count() > 0)
 @php
+// Closure helper to get skill name based on type (avoids function-redeclaration issue in @php blocks)
+$getSkillNama = function ($score) {
+    if ($score->skill_type === 'soft_skill') {
+        return $score->skill->nama_indikator ?? 'Unknown';
+    }
+    return $score->skill->kpi ?? $score->skill->nama_indikator ?? 'Unknown';
+};
+
 // Merge scores by skill for comparison
 $comparisonData = [];
 foreach ($selfScores as $score) {
     $key = $score->skill_type . ':' . $score->skill_id;
     $comparisonData[$key] = [
-        'nama' => $score->skill->nama_indikator ?? 'Unknown',
+        'nama' => $getSkillNama($score),
         'tipe' => $score->skill_type === 'soft_skill' ? 'Soft Skill' : 'Hard Skill',
         'self' => $score->skor,
         'atasan' => null,
@@ -110,7 +118,7 @@ foreach ($atasanScores as $score) {
         $comparisonData[$key]['selisih'] = $score->skor - $comparisonData[$key]['self'];
     } else {
         $comparisonData[$key] = [
-            'nama' => $score->skill->nama_indikator ?? 'Unknown',
+            'nama' => $getSkillNama($score),
             'tipe' => $score->skill_type === 'soft_skill' ? 'Soft Skill' : 'Hard Skill',
             'self' => null,
             'atasan' => $score->skor,
@@ -198,7 +206,7 @@ foreach ($atasanScores as $score) {
     <div class="grid gap-3 sm:grid-cols-2">
         @foreach($atasanScores as $score)
         <div class="flex items-center justify-between rounded-lg border border-orange-100 bg-orange-50/50 p-3 dark:border-orange-900 dark:bg-orange-900/20">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ $score->skill->nama_indikator ?? 'Unknown' }}</span>
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ $score->skill_type === 'soft_skill' ? $score->skill->nama_indikator : ($score->skill->kpi ?? $score->skill->nama_indikator ?? 'Unknown') }}</span>
             <span class="font-semibold text-orange-700 dark:text-orange-400">{{ $score->skor }}</span>
         </div>
         @endforeach

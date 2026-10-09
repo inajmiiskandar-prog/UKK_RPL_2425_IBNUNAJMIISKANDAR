@@ -136,7 +136,7 @@
         @php
             $scoreValue = old("scores.{$skill->id}", $wizardData['atasan_hard_skills'][$skill->id] ?? 50);
             $noteValue = old("notes.{$skill->id}", $wizardData['atasan_hard_notes'][$skill->id] ?? '');
-            $selfScore = $selfScores->get($skill->id);
+            $selfScore = $selfScores->get('hard_skill:' . $skill->id);
         @endphp
         <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800">
             <div class="mb-3">
