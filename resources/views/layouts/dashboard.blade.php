@@ -106,6 +106,14 @@
             transition: all 0.3s ease;
         }
 
+        /* Sidebar collapsible group */
+        .sidebar-group-content {
+            max-height: 0;
+        }
+        .sidebar-group-content[data-open="true"] {
+            max-height: 1000px;
+        }
+
         /* Active menu item - dynamic primary color */
         .menu-item.active {
             background: linear-gradient(to right, {{ $primaryColor }}, {{ $secondaryColor }});
@@ -187,99 +195,115 @@
                     $canViewOlt = in_array($masterDataRole, ['ADMIN', 'LEADER'], true);
                     $canViewOdp = in_array($masterDataRole, ['ADMIN', 'LEADER'], true);
                     $canViewOnt = in_array($masterDataRole, ['ADMIN', 'LOGISTIK', 'TEKNISI'], true);
-                    $canViewPortPon = in_array($masterDataRole, ['ADMIN', 'TEKNISI'], true);
+                    $canViewPortPon = $masterDataRole === 'ADMIN' || $masterDataRole === 'TEKNISI';
                     $canViewMaterial = in_array($masterDataRole, ['ADMIN', 'LOGISTIK', 'TEKNISI'], true);
                     $canViewPaket = in_array($masterDataRole, ['ADMIN', 'LOGISTIK'], true);
                     $canViewAnyMasterData = $canViewArea || $canViewPop || $canViewOlt || $canViewOdp
                         || $canViewOnt || $canViewPortPon || $canViewMaterial || $canViewPaket;
+
+                    // Deteksi apakah grup Master Data aktif
+                    $isMasterDataActive = request()->routeIs('masterdata.*');
                 @endphp
 
                 @if($canViewAnyMasterData)
-                <div class="mt-6 mb-2 px-4">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Master Data</p>
-                </div>
-
-                <div class="space-y-1">
-                    @if($canViewArea)
-                    <a href="{{ route('masterdata.area.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.area.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                {{-- Master Data Group --}}
+                <div class="mt-4" data-sidebar-group="master-data">
+                    <button
+                        type="button"
+                        data-sidebar-toggle="master-data"
+                        aria-expanded="{{ $isMasterDataActive ? 'true' : 'false' }}"
+                        aria-controls="sidebar-master-data"
+                        class="sidebar-group-toggle w-full flex items-center justify-between rounded-xl px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <span>Master Data</span>
+                        <svg class="sidebar-chevron h-4 w-4 transition-transform duration-200 {{ $isMasterDataActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
-                        <span>Area</span>
-                    </a>
-                    @endif
+                    </button>
+                    <div id="sidebar-master-data" class="sidebar-group-content overflow-hidden transition-all duration-300 ease-in-out" data-open="{{ $isMasterDataActive ? 'true' : 'false' }}">
+                        <div class="space-y-1 pt-1">
+                            @if($canViewArea)
+                            <a href="{{ route('masterdata.area.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.area.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span>Area</span>
+                            </a>
+                            @endif
 
-                    @if($canViewPop)
-                    <a href="{{ route('masterdata.pop.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.pop.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                        </svg>
-                        <span>POP</span>
-                    </a>
-                    @endif
+                            @if($canViewPop)
+                            <a href="{{ route('masterdata.pop.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.pop.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                                <span>POP</span>
+                            </a>
+                            @endif
 
-                    @if($canViewOlt)
-                    <a href="{{ route('masterdata.olt.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.olt.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
-                        </svg>
-                        <span>OLT</span>
-                    </a>
-                    @endif
+                            @if($canViewOlt)
+                            <a href="{{ route('masterdata.olt.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.olt.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+                                </svg>
+                                <span>OLT</span>
+                            </a>
+                            @endif
 
-                    @if($canViewOdp)
-                    <a href="{{ route('masterdata.odp.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.odp.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
-                        </svg>
-                        <span>ODP</span>
-                    </a>
-                    @endif
+                            @if($canViewOdp)
+                            <a href="{{ route('masterdata.odp.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.odp.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                                </svg>
+                                <span>ODP</span>
+                            </a>
+                            @endif
 
-                    @if($canViewOnt)
-                    <a href="{{ route('masterdata.ont.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.ont.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                        </svg>
-                        <span>ONT</span>
-                    </a>
-                    @endif
+                            @if($canViewOnt)
+                            <a href="{{ route('masterdata.ont.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.ont.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                                <span>ONT</span>
+                            </a>
+                            @endif
 
-                    @if($canViewPortPon)
-                    <a href="{{ route('masterdata.port-pon.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.port-pon.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
-                        </svg>
-                        <span>Port PON</span>
-                    </a>
-                    @endif
+                            @if($canViewPortPon)
+                            <a href="{{ route('masterdata.port-pon.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.port-pon.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+                                </svg>
+                                <span>Port PON</span>
+                            </a>
+                            @endif
 
-                    @if($canViewMaterial)
-                    <a href="{{ route('masterdata.material.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.material.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
-                        </svg>
-                        <span>Material</span>
-                    </a>
-                    @endif
+                            @if($canViewMaterial)
+                            <a href="{{ route('masterdata.material.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.material.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                                </svg>
+                                <span>Material</span>
+                            </a>
+                            @endif
 
-                    @if($canViewPaket)
-                    <a href="{{ route('masterdata.paket.index') }}"
-                       class="menu-item {{ request()->routeIs('masterdata.paket.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                        <span>Paket</span>
-                    </a>
-                    @endif
+                            @if($canViewPaket)
+                            <a href="{{ route('masterdata.paket.index') }}"
+                               class="menu-item {{ request()->routeIs('masterdata.paket.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                                <span>Paket</span>
+                            </a>
+                            @endif
+                        </div>
+                    </div>
                 </div>
                 @endif
 
@@ -290,55 +314,86 @@
                     $canViewBaa = in_array($networkRole, ['ADMIN', 'LEADER', 'TEKNISI', 'SALES'], true);
                     $canViewSettings = $networkRole === 'ADMIN';
                     $canViewAnyTransaction = $canViewFab || $canViewBaa;
+
+                    // Deteksi apakah grup Transaksi aktif
+                    $isTransaksiActive = request()->routeIs('jaringan.fab.*', 'jaringan.baa.*');
                 @endphp
 
                 @if($canViewAnyTransaction)
-                <div class="mt-6 mb-2 px-4">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Transaksi</p>
-                </div>
-
-                <div class="space-y-1">
-                    @if($canViewFab)
-                    <a href="{{ route('jaringan.fab.index') }}"
-                       class="menu-item {{ request()->routeIs('jaringan.fab.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                {{-- Transaksi Group --}}
+                <div class="mt-2" data-sidebar-group="transaksi">
+                    <button
+                        type="button"
+                        data-sidebar-toggle="transaksi"
+                        aria-expanded="{{ $isTransaksiActive ? 'true' : 'false' }}"
+                        aria-controls="sidebar-transaksi"
+                        class="sidebar-group-toggle w-full flex items-center justify-between rounded-xl px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <span>Transaksi</span>
+                        <svg class="sidebar-chevron h-4 w-4 transition-transform duration-200 {{ $isTransaksiActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
-                        <span>Pelanggan (FAB)</span>
-                    </a>
-                    @endif
+                    </button>
+                    <div id="sidebar-transaksi" class="sidebar-group-content overflow-hidden transition-all duration-300 ease-in-out" data-open="{{ $isTransaksiActive ? 'true' : 'false' }}">
+                        <div class="space-y-1 pt-1">
+                            @if($canViewFab)
+                            <a href="{{ route('jaringan.fab.index') }}"
+                               class="menu-item {{ request()->routeIs('jaringan.fab.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                <span>Pelanggan (FAB)</span>
+                            </a>
+                            @endif
 
-                    @if($canViewBaa)
-                    <a href="{{ route('jaringan.baa.index') }}"
-                       class="menu-item {{ request()->routeIs('jaringan.baa.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span>BAA</span>
-                    </a>
-                    @endif
+                            @if($canViewBaa)
+                            <a href="{{ route('jaringan.baa.index') }}"
+                               class="menu-item {{ request()->routeIs('jaringan.baa.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span>BAA</span>
+                            </a>
+                            @endif
+                        </div>
+                    </div>
                 </div>
                 @endif
 
                 @php
                     // Users routes are restricted to ADMIN in routes/web.php.
                     $canManageUsers = auth()->user()?->role === 'ADMIN';
+
+                    // Deteksi apakah grup Lainnya aktif
+                    $isLainnyaActive = request()->routeIs('users.*');
                 @endphp
 
                 @if($canManageUsers)
-                <div class="mt-6 mb-2 px-4">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Lainnya</p>
-                </div>
-
-                <div class="space-y-1">
-                    <a href="{{ route('users.index') }}"
-                       class="menu-item {{ request()->routeIs('users.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                {{-- Lainnya Group --}}
+                <div class="mt-2" data-sidebar-group="lainnya">
+                    <button
+                        type="button"
+                        data-sidebar-toggle="lainnya"
+                        aria-expanded="{{ $isLainnyaActive ? 'true' : 'false' }}"
+                        aria-controls="sidebar-lainnya"
+                        class="sidebar-group-toggle w-full flex items-center justify-between rounded-xl px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <span>Lainnya</span>
+                        <svg class="sidebar-chevron h-4 w-4 transition-transform duration-200 {{ $isLainnyaActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
-                        <span>Users</span>
-                    </a>
-
+                    </button>
+                    <div id="sidebar-lainnya" class="sidebar-group-content overflow-hidden transition-all duration-300 ease-in-out" data-open="{{ $isLainnyaActive ? 'true' : 'false' }}">
+                        <div class="space-y-1 pt-1">
+                            <a href="{{ route('users.index') }}"
+                               class="menu-item {{ request()->routeIs('users.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                                </svg>
+                                <span>Users</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 @endif
 
@@ -349,80 +404,111 @@
                     $canViewSoftSkill = $kpiRole === 'ADMIN';
                     $canViewHardSkill = in_array($kpiRole, ['ADMIN', 'LEADER'], true);
                     $canViewKpiExport = $kpiRole === 'ADMIN';
+
+                    // Deteksi apakah grup KPI aktif
+                    $isKpiActive = request()->routeIs('kpi.*');
                 @endphp
 
                 @if($canViewKpiAssessment || $canViewSoftSkill || $canViewHardSkill || $canViewKpiExport)
-                <div class="mt-6 mb-2 px-4">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">KPI</p>
-                </div>
-
-                <div class="space-y-1">
-                    {{-- Master Data KPI --}}
-                    @if($canViewSoftSkill)
-                    <a href="{{ route('kpi.soft-skill.index') }}"
-                       class="menu-item {{ request()->routeIs('kpi.soft-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                {{-- KPI Group --}}
+                <div class="mt-2" data-sidebar-group="kpi">
+                    <button
+                        type="button"
+                        data-sidebar-toggle="kpi"
+                        aria-expanded="{{ $isKpiActive ? 'true' : 'false' }}"
+                        aria-controls="sidebar-kpi"
+                        class="sidebar-group-toggle w-full flex items-center justify-between rounded-xl px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                        <span>KPI</span>
+                        <svg class="sidebar-chevron h-4 w-4 transition-transform duration-200 {{ $isKpiActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
-                        <span>Soft Skill</span>
-                    </a>
-                    @endif
+                    </button>
+                    <div id="sidebar-kpi" class="sidebar-group-content overflow-hidden transition-all duration-300 ease-in-out" data-open="{{ $isKpiActive ? 'true' : 'false' }}">
+                        <div class="space-y-1 pt-1">
+                            @if($canViewSoftSkill)
+                            <a href="{{ route('kpi.soft-skill.index') }}"
+                               class="menu-item {{ request()->routeIs('kpi.soft-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                <span>Soft Skill</span>
+                            </a>
+                            @endif
 
-                    @if($canViewHardSkill)
-                    <a href="{{ route('kpi.hard-skill.index') }}"
-                       class="menu-item {{ request()->routeIs('kpi.hard-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
-                        </svg>
-                        <span>Hard Skill</span>
-                    </a>
-                    @endif
+                            @if($canViewHardSkill)
+                            <a href="{{ route('kpi.hard-skill.index') }}"
+                               class="menu-item {{ request()->routeIs('kpi.hard-skill.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                                </svg>
+                                <span>Hard Skill</span>
+                            </a>
+                            @endif
 
-                    @if($canViewKpiAssessment)
-                    <a href="{{ route('kpi.assessment.index') }}"
-                       class="menu-item {{ request()->routeIs('kpi.assessment.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                        </svg>
-                        <span>Penilaian KPI</span>
-                    </a>
+                            @if($canViewKpiAssessment)
+                            <a href="{{ route('kpi.assessment.index') }}"
+                               class="menu-item {{ request()->routeIs('kpi.assessment.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                                </svg>
+                                <span>Penilaian KPI</span>
+                            </a>
 
-                    <a href="{{ route('kpi.assessment.history') }}"
-                       class="menu-item {{ request()->routeIs('kpi.assessment.history') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                        </svg>
-                        <span>Histori KPI</span>
-                    </a>
-                    @endif
+                            <a href="{{ route('kpi.assessment.history') }}"
+                               class="menu-item {{ request()->routeIs('kpi.assessment.history') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                                <span>Histori KPI</span>
+                            </a>
+                            @endif
 
-                    @if($canViewKpiExport)
-                    <a href="{{ route('kpi.report.index') }}"
-                       class="menu-item {{ request()->routeIs('kpi.report.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        <span>Export Data</span>
-                    </a>
-                    @endif
+                            @if($canViewKpiExport)
+                            <a href="{{ route('kpi.report.index') }}"
+                               class="menu-item {{ request()->routeIs('kpi.report.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                <span>Export Data</span>
+                            </a>
+                            @endif
+                        </div>
+                    </div>
                 </div>
                 @endif
 
                 @if($canViewSettings)
-                {{-- Pengaturan Section (Paling Bawah) --}}
-                <div class="mt-6 mb-2 px-4">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-gray-400">Pengaturan</p>
-                </div>
-
-                <div class="space-y-1 mb-6">
-                    <a href="{{ route('settings.index') }}"
-                       class="menu-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
+                @php
+                    // Deteksi apakah grup Pengaturan aktif
+                    $isPengaturanActive = request()->routeIs('settings.*');
+                @endphp
+                {{-- Pengaturan Group (Paling Bawah) --}}
+                <div class="mt-2 mb-6" data-sidebar-group="pengaturan">
+                    <button
+                        type="button"
+                        data-sidebar-toggle="pengaturan"
+                        aria-expanded="{{ $isPengaturanActive ? 'true' : 'false' }}"
+                        aria-controls="sidebar-pengaturan"
+                        class="sidebar-group-toggle w-full flex items-center justify-between rounded-xl px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                    >
                         <span>Pengaturan</span>
-                    </a>
+                        <svg class="sidebar-chevron h-4 w-4 transition-transform duration-200 {{ $isPengaturanActive ? 'rotate-180' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="sidebar-pengaturan" class="sidebar-group-content overflow-hidden transition-all duration-300 ease-in-out" data-open="{{ $isPengaturanActive ? 'true' : 'false' }}">
+                        <div class="space-y-1 pt-1">
+                            <a href="{{ route('settings.index') }}"
+                               class="menu-item {{ request()->routeIs('settings.*') ? 'active' : '' }} flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span>Pengaturan</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
                 @endif
             </nav>
@@ -683,6 +769,102 @@
 
         // CSRF Token for AJAX
         window.csrfToken = '{{ csrf_token() }}';
+
+        // Sidebar collapsible groups
+        (function() {
+            const STORAGE_KEY = 'sidebar_group_state';
+
+            // Muat state dari localStorage
+            function loadState() {
+                try {
+                    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+                } catch {
+                    return {};
+                }
+            }
+
+            // Simpan state ke localStorage
+            function saveState(state) {
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+                } catch {
+                    // localStorage tidak tersedia, lanjut tanpa menyimpan
+                }
+            }
+
+            // Toggle grup sidebar
+            function toggleGroup(groupId) {
+                const content = document.getElementById('sidebar-' + groupId);
+                const button = document.querySelector('[data-sidebar-toggle="' + groupId + '"]');
+                if (!content || !button) return;
+
+                const isOpen = content.dataset.open === 'true';
+                const newState = !isOpen;
+
+                content.dataset.open = String(newState);
+                button.setAttribute('aria-expanded', String(newState));
+
+                // Putar chevron
+                const chevron = button.querySelector('.sidebar-chevron');
+                if (chevron) {
+                    chevron.classList.toggle('rotate-180', newState);
+                }
+
+                // Simpan state
+                const state = loadState();
+                state[groupId] = newState;
+                saveState(state);
+            }
+
+            // Inisialisasi grup saat halaman dimuat
+            function initGroups() {
+                const state = loadState();
+
+                document.querySelectorAll('[data-sidebar-toggle]').forEach(function(button) {
+                    const groupId = button.dataset.sidebarToggle;
+                    const content = document.getElementById('sidebar-' + groupId);
+                    if (!content) return;
+
+                    // Halaman aktif memaksa grup terbuka (server sudah set aria-expanded)
+                    const isActivePage = button.getAttribute('aria-expanded') === 'true';
+
+                    if (isActivePage) {
+                        content.dataset.open = 'true';
+                        button.setAttribute('aria-expanded', 'true');
+                        const chevron = button.querySelector('.sidebar-chevron');
+                        if (chevron) chevron.classList.add('rotate-180');
+                    } else if (state[groupId] !== undefined) {
+                        // Pakai state localStorage untuk grup non-aktif
+                        const isOpen = state[groupId];
+                        content.dataset.open = String(isOpen);
+                        button.setAttribute('aria-expanded', String(isOpen));
+                        const chevron = button.querySelector('.sidebar-chevron');
+                        if (chevron) chevron.classList.toggle('rotate-180', isOpen);
+                    }
+                });
+            }
+
+            // Event listener untuk tombol toggle
+            document.addEventListener('click', function(e) {
+                const button = e.target.closest('[data-sidebar-toggle]');
+                if (button) {
+                    e.preventDefault();
+                    toggleGroup(button.dataset.sidebarToggle);
+                }
+            });
+
+            // Keyboard support (Enter/Space)
+            document.addEventListener('keydown', function(e) {
+                const button = e.target.closest('[data-sidebar-toggle]');
+                if (button && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault();
+                    toggleGroup(button.dataset.sidebarToggle);
+                }
+            });
+
+            // Init saat DOM siap
+            initGroups();
+        })();
     </script>
 
     @stack('scripts')
