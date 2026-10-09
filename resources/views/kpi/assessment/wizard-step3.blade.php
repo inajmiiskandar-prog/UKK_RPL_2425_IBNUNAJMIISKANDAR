@@ -128,24 +128,13 @@
 </div>
 @else
 {{-- Form penilaian hard skill --}}
-@php
-    // Skala penilaian: label => nilai numerik
-    $penilaianScale = [
-        'Sangat Baik' => 100,
-        'Baik' => 80,
-        'Cukup' => 60,
-        'Kurang' => 40,
-        'Sangat Kurang' => 20,
-    ];
-@endphp
-
 <form action="{{ route('kpi.assessment.wizard.step3.store') }}" method="POST">
     @csrf
 
     <div class="space-y-4">
         @foreach($hardSkills as $skill)
         @php
-            $scoreValue = old("scores.{$skill->id}", $wizardData['atasan_hard_skills'][$skill->id] ?? '');
+            $scoreValue = old("scores.{$skill->id}", $wizardData['atasan_hard_skills'][$skill->id] ?? 50);
             $noteValue = old("notes.{$skill->id}", $wizardData['atasan_hard_notes'][$skill->id] ?? '');
             $selfScore = $selfScores->get($skill->id);
         @endphp
@@ -170,28 +159,27 @@
                 @endif
             </div>
 
-            {{-- Dropdown Penilaian --}}
-            <div class="mb-3">
-                <p class="mb-2 text-sm text-blue-600 dark:text-blue-400">Self-assessment karyawan: <strong>{{ $selfScore?->skor ?? '-' }}</strong></p>
-                <select name="scores[{{ $skill->id }}]" id="score-hard-{{ $skill->id }}"
-                        class="w-full rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm focus:border-purple-500 focus:outline-none dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        required>
-                    <option value="">-- Pilih Penilaian --</option>
-                    @foreach($penilaianScale as $label => $value)
-                    <option value="{{ $value }}" {{ $scoreValue == $value ? 'selected' : '' }}>
-                        {{ $label }} ({{ $value }})
-                    </option>
-                    @endforeach
-                </select>
+            {{-- Self Assessment Info --}}
+            <p class="mb-2 text-sm text-blue-600 dark:text-blue-400">Self-assessment karyawan: <strong>{{ $selfScore?->skor ?? '-' }}</strong></p>
+
+            {{-- Slider 1-100 dengan Bubble --}}
+            <div class="mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="relative min-w-0 flex-1 pt-7" data-score-control>
+                        <output data-score-bubble class="pointer-events-none absolute top-0 left-0 z-10 min-w-9 -translate-x-1/2 whitespace-nowrap rounded-md bg-purple-700 px-2 py-1 text-center text-xs font-semibold text-white dark:bg-purple-500">{{ $scoreValue }}</output>
+                        <input type="range" id="range-hard-{{ $skill->id }}" min="1" max="100" value="{{ $scoreValue }}"
+                               class="block h-8 w-full cursor-pointer appearance-none bg-transparent"
+                               data-score-range data-number-input="score-val-hard-{{ $skill->id }}"
+                               aria-label="Nilai {{ $skill->kpi }}" aria-valuenow="{{ $scoreValue }}">
+                    </div>
+                    <input type="hidden" name="scores[{{ $skill->id }}]"
+                           value="{{ $scoreValue }}"
+                           id="score-val-hard-{{ $skill->id }}">
+                </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                @foreach($penilaianScale as $label => $value)
-                    <span class="{{ $scoreValue == $value ? 'text-purple-600 font-bold' : '' }}">{{ $label }} ({{ $value }})</span>
-                @endforeach
-            </div>
-
-            <div class="mt-3">
+            {{-- Catatan --}}
+            <div>
                 <input type="text" name="notes[{{ $skill->id }}]" value="{{ $noteValue }}"
                        placeholder="Catatan (opsional)"
                        class="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-1.5 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white">
@@ -212,3 +200,90 @@
 </form>
 @endif
 @endsection
+
+@push('styles')
+<style>
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #9333ea;
+        cursor: pointer;
+    }
+    input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #9333ea;
+        cursor: pointer;
+        border: none;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+        height: 6px;
+        border-radius: 9999px;
+        background: #e5e7eb;
+    }
+    input[type="range"]::-moz-range-track {
+        height: 6px;
+        border-radius: 9999px;
+        background: #e5e7eb;
+    }
+    .dark input[type="range"]::-webkit-slider-runnable-track {
+        background: #475569;
+    }
+    .dark input[type="range"]::-moz-range-track {
+        background: #475569;
+    }
+    input[type="range"]:focus-visible {
+        outline: 2px solid #7c3aed;
+        outline-offset: 4px;
+    }
+</style>
+@endpush
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sliders = document.querySelectorAll('[data-score-range]');
+
+    function updateBubble(slider) {
+        const control = slider.closest('[data-score-control]');
+        const bubble = control.querySelector('[data-score-bubble]');
+        const min = Number(slider.min);
+        const max = Number(slider.max);
+        const value = Number(slider.value);
+        const thumbRadius = 10;
+        const usableWidth = Math.max(0, slider.clientWidth - thumbRadius * 2);
+        const ratio = (value - min) / (max - min);
+
+        bubble.textContent = slider.value;
+        bubble.style.left = `${thumbRadius + usableWidth * ratio}px`;
+        slider.setAttribute('aria-valuenow', slider.value);
+    }
+
+    sliders.forEach(function(slider) {
+        const numberInput = document.getElementById(slider.dataset.numberInput);
+        numberInput.value = slider.value;
+
+        slider.addEventListener('input', function() {
+            numberInput.value = slider.value;
+            updateBubble(slider);
+        });
+
+        numberInput.addEventListener('input', function() {
+            if (numberInput.value === '') return;
+            slider.value = numberInput.value;
+            numberInput.value = slider.value;
+            updateBubble(slider);
+        });
+
+        updateBubble(slider);
+    });
+
+    window.addEventListener('resize', function() {
+        sliders.forEach(updateBubble);
+    });
+});
+</script>
+@endpush

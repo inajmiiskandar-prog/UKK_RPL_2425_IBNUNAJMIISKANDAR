@@ -804,15 +804,14 @@ class KpiAssessmentController extends Controller
      */
     public function wizardPostStep2(Request $request)
     {
-        // Validasi: nilai harus dari skala dropdown (20, 40, 60, 80, 100)
-        $validScores = [20, 40, 60, 80, 100];
-
+        // Validasi: nilai integer 1-100
         $request->validate([
             'scores' => 'required|array',
-            'scores.*' => 'required|integer|in:' . implode(',', $validScores),
+            'scores.*' => 'required|integer|min:1|max:100',
         ], [
             'scores.required' => 'Minimal satu indikator harus dinilai!',
-            'scores.*.in' => 'Nilai harus dipilih dari daftar yang tersedia!',
+            'scores.*.min' => 'Nilai minimal adalah 1!',
+            'scores.*.max' => 'Nilai maksimal adalah 100!',
         ]);
 
         $wizardData = session('kpi_wizard', []);
@@ -879,9 +878,6 @@ class KpiAssessmentController extends Controller
      */
     public function wizardPostStep3(Request $request)
     {
-        // Validasi: nilai harus dari skala dropdown (20, 40, 60, 80, 100)
-        $validScores = [20, 40, 60, 80, 100];
-
         // Handle skip button jika tidak ada hard skill untuk divisi/jabatan ini
         if ($request->input('skip') == '1') {
             $wizardData = session('kpi_wizard', []);
@@ -891,7 +887,7 @@ class KpiAssessmentController extends Controller
             return redirect()->route('kpi.assessment.wizard.step4');
         }
 
-        // Validasi khusus untuk step 3 - hanya jika ada hard skills yang harus dinilai
+        // Validasi: nilai integer 1-100
         $wizardData = session('kpi_wizard', []);
         $employee = User::find($wizardData['user_id'] ?? null);
 
@@ -904,10 +900,11 @@ class KpiAssessmentController extends Controller
             if ($hardSkillsCount > 0) {
                 $request->validate([
                     'scores' => 'required|array',
-                    'scores.*' => 'required|integer|in:' . implode(',', $validScores),
+                    'scores.*' => 'required|integer|min:1|max:100',
                 ], [
                     'scores.required' => 'Minimal satu indikator harus dinilai!',
-                    'scores.*.in' => 'Nilai harus dipilih dari daftar yang tersedia!',
+                    'scores.*.min' => 'Nilai minimal adalah 1!',
+                    'scores.*.max' => 'Nilai maksimal adalah 100!',
                 ]);
             }
         }
