@@ -60,9 +60,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::middleware('role:ADMIN,LEADER')->prefix('masterdata')->name('masterdata.')->group(function () {
-        // Export routes: LETAKKAN SEBELUM resource agar tidak tertangkap {olt} wildcard
+        // Export routes: LETAKKAN SEBELUM resource agar tidak tertangkap {olt}/{odp} wildcard
         Route::get('olt/exportCsv', [OltController::class, 'exportCsv'])->name('olt.exportCsv');
         Route::get('olt/exportExcel', [OltController::class, 'exportExcel'])->name('olt.exportExcel');
+        Route::get('odp/exportCsv', [OdpController::class, 'exportCsv'])->name('odp.exportCsv');
+        Route::get('odp/exportExcel', [OdpController::class, 'exportExcel'])->name('odp.exportExcel');
 
         Route::resource('olt', OltController::class)->except(['destroy']);
         Route::resource('odp', OdpController::class)->except(['destroy']);

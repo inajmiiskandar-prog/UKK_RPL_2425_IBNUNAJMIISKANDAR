@@ -5,14 +5,22 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\Odp;
 use App\Models\Olt;
+use App\Traits\ExportsTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OdpController extends Controller
 {
-    public function index(Request $request)
+    use ExportsTable;
+
+    /**
+     * Helper: build query dengan filter search + olt (dipakai index dan export).
+     * Eager load olt.pop.area dan withCount onts untuk avoid N+1.
+     */
+    private function buildOdpQuery(Request $request)
     {
-        $query = Odp::with(['olt.pop.area']);
+        $query = Odp::with(['olt.pop.area'])
+            ->withCount('onts');
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($searchQuery) use ($search) {
@@ -25,11 +33,84 @@ class OdpController extends Controller
             $query->where('id_olt', $request->olt);
         }
 
-        $odps = $query->orderBy('kode_odp')->paginate(10);
+        return $query->orderBy('kode_odp');
+    }
+
+    public function index(Request $request)
+    {
+        $odps = $this->buildOdpQuery($request)->paginate(10);
         $odps->appends($request->all());
         $olts = Olt::with('pop.area')->orderBy('kode_olt')->get();
 
         return view('master.odp.index', compact('odps', 'olts'));
+    }
+
+    /**
+     * Export ODP ke CSV (14 kolom).
+     */
+    public function exportCsv(Request $request)
+    {
+        $odps = $this->buildOdpQuery($request)->get();
+        $rows = $odps->map(fn ($odp, $i) => [
+            'no' => $i + 1,
+            'kode_odp' => $odp->kode_odp,
+            'nama_odp' => $odp->nama_odp,
+            'alamat' => $odp->alamat ?? '',
+            'olt' => $odp->olt->nama_olt ?? '',
+            'pop' => $odp->olt->pop->nama_pop ?? '',
+            'area' => $odp->olt->pop->area->nama_area ?? '',
+            'jumlah_port' => $odp->jumlah_port ?? 0,
+            'port_terpakai' => $odp->onts_count,
+            'port_tersedia' => max(0, ($odp->jumlah_port ?? 0) - $odp->onts_count),
+            'ont_terpasang' => $odp->onts_count,
+            'latitude' => $odp->latitude,
+            'longitude' => $odp->longitude,
+            'tanggal_dibuat' => $odp->createdAt?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = [
+            'No', 'Kode ODP', 'Nama ODP', 'Alamat', 'OLT', 'POP', 'Area',
+            'Jumlah Port', 'Port Terpakai', 'Port Tersedia', 'ONT Terpasang',
+            'Latitude', 'Longitude', 'Tanggal Dibuat'
+        ];
+        $content = $this->toCsvContent($headers, $rows);
+        $filename = $this->generateExportFilename('ODP', 'csv');
+
+        return $this->csvResponse($content, $filename);
+    }
+
+    /**
+     * Export ODP ke Excel (HTML table format, 14 kolom).
+     */
+    public function exportExcel(Request $request)
+    {
+        $odps = $this->buildOdpQuery($request)->get();
+        $rows = $odps->map(fn ($odp, $i) => [
+            'no' => $i + 1,
+            'kode_odp' => $odp->kode_odp,
+            'nama_odp' => $odp->nama_odp,
+            'alamat' => $odp->alamat ?? '',
+            'olt' => $odp->olt->nama_olt ?? '',
+            'pop' => $odp->olt->pop->nama_pop ?? '',
+            'area' => $odp->olt->pop->area->nama_area ?? '',
+            'jumlah_port' => $odp->jumlah_port ?? 0,
+            'port_terpakai' => $odp->onts_count,
+            'port_tersedia' => max(0, ($odp->jumlah_port ?? 0) - $odp->onts_count),
+            'ont_terpasang' => $odp->onts_count,
+            'latitude' => $odp->latitude,
+            'longitude' => $odp->longitude,
+            'tanggal_dibuat' => $odp->createdAt?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = [
+            'No', 'Kode ODP', 'Nama ODP', 'Alamat', 'OLT', 'POP', 'Area',
+            'Jumlah Port', 'Port Terpakai', 'Port Tersedia', 'ONT Terpasang',
+            'Latitude', 'Longitude', 'Tanggal Dibuat'
+        ];
+        $content = $this->toXlsContent($headers, $rows);
+        $filename = $this->generateExportFilename('ODP', 'xls');
+
+        return $this->xlsResponse($content, $filename);
     }
 
     public function create()
