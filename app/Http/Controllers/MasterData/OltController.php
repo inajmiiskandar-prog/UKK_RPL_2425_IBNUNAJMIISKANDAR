@@ -5,14 +5,21 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\Olt;
 use App\Models\Pop;
+use App\Traits\ExportsTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class OltController extends Controller
 {
-    public function index(Request $request)
+    use ExportsTable;
+
+    /**
+     * Helper: build query dengan filter search + pop (dipakai index dan export).
+     * Eager load pop dan area untuk avoid N+1.
+     */
+    private function buildOltQuery(Request $request)
     {
-        $query = Olt::with('pop');
+        $query = Olt::with('pop.area');
 
         if ($search = trim((string) $request->input('search'))) {
             $query->where(function ($searchQuery) use ($search) {
@@ -26,11 +33,70 @@ class OltController extends Controller
             $query->where('id_pop', $request->pop);
         }
 
-        $olts = $query->orderBy('kode_olt')->paginate(10);
+        return $query->orderBy('kode_olt');
+    }
+
+    public function index(Request $request)
+    {
+        $olts = $this->buildOltQuery($request)->paginate(10);
         $olts->appends($request->all());
         $pops = Pop::with('area')->orderBy('kode_pop')->get();
 
         return view('master.olt.index', compact('olts', 'pops'));
+    }
+
+    /**
+     * Export OLT ke CSV.
+     * TANPA username dan password (kredensial tidak boleh di-export).
+     */
+    public function exportCsv(Request $request)
+    {
+        $olts = $this->buildOltQuery($request)->get();
+        $rows = $olts->map(fn ($olt, $i) => [
+            'no' => $i + 1,
+            'kode_olt' => $olt->kode_olt,
+            'nama_olt' => $olt->nama_olt,
+            'lokasi' => $olt->lokasi ?? '',
+            'ip_olt' => $olt->ip_olt ?? '',
+            'pop' => $olt->pop->nama_pop ?? '',
+            'area' => $olt->pop->area->nama_area ?? '',
+            'latitude' => $olt->latitude,
+            'longitude' => $olt->longitude,
+            'tanggal_dibuat' => $olt->createdAt?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = ['No', 'Kode OLT', 'Nama OLT', 'Lokasi', 'IP OLT', 'POP', 'Area', 'Latitude', 'Longitude', 'Tanggal Dibuat'];
+        $content = $this->toCsvContent($headers, $rows);
+        $filename = $this->generateExportFilename('OLT', 'csv');
+
+        return $this->csvResponse($content, $filename);
+    }
+
+    /**
+     * Export OLT ke Excel (HTML table format).
+     * TANPA username dan password.
+     */
+    public function exportExcel(Request $request)
+    {
+        $olts = $this->buildOltQuery($request)->get();
+        $rows = $olts->map(fn ($olt, $i) => [
+            'no' => $i + 1,
+            'kode_olt' => $olt->kode_olt,
+            'nama_olt' => $olt->nama_olt,
+            'lokasi' => $olt->lokasi ?? '',
+            'ip_olt' => $olt->ip_olt ?? '',
+            'pop' => $olt->pop->nama_pop ?? '',
+            'area' => $olt->pop->area->nama_area ?? '',
+            'latitude' => $olt->latitude,
+            'longitude' => $olt->longitude,
+            'tanggal_dibuat' => $olt->createdAt?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = ['No', 'Kode OLT', 'Nama OLT', 'Lokasi', 'IP OLT', 'POP', 'Area', 'Latitude', 'Longitude', 'Tanggal Dibuat'];
+        $content = $this->toXlsContent($headers, $rows);
+        $filename = $this->generateExportFilename('OLT', 'xls');
+
+        return $this->xlsResponse($content, $filename);
     }
 
     public function create()
