@@ -49,6 +49,10 @@ Route::middleware('auth')->group(function () {
 
     // Master Data - view, create, and update access by resource role.
     Route::middleware('role:ADMIN')->prefix('masterdata')->name('masterdata.')->group(function () {
+        // Export routes: LETAKKAN SEBELUM resource agar tidak tertangkap {area} wildcard
+        Route::get('area/exportCsv', [AreaController::class, 'exportCsv'])->name('area.exportCsv');
+        Route::get('area/exportExcel', [AreaController::class, 'exportExcel'])->name('area.exportExcel');
+
         Route::resource('area', AreaController::class)->except(['destroy']);
         Route::resource('pop', PopController::class)->except(['destroy']);
     });

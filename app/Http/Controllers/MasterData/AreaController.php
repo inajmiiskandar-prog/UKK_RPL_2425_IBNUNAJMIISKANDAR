@@ -4,29 +4,82 @@ namespace App\Http\Controllers\MasterData;
 
 use App\Http\Controllers\Controller;
 use App\Models\Area;
+use App\Traits\ExportsTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AreaController extends Controller
 {
+    use ExportsTable;
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $query = Area::query();
-
-        if ($search = trim((string) $request->input('search'))) {
-            $query->where(function ($searchQuery) use ($search) {
-                $searchQuery->where('nama_area', 'like', "%{$search}%")
-                    ->orWhere('kode_area', 'like', "%{$search}%");
-            });
-        }
-
-        $areas = $query->orderBy('kode_area')->paginate(10);
+        $areas = $this->buildAreaQuery($request)->paginate(10);
         $areas->appends($request->all());
 
         return view('master.area.index', compact('areas'));
+    }
+
+    /**
+     * Helper: build query dengan filter search (dipakai index dan export).
+     * Mengembalikan Builder agar bisa dipaginasi atau di-get().
+     */
+    private function buildAreaQuery(Request $request)
+    {
+        $query = Area::query();
+
+        if ($search = trim((string) $request->input('search'))) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_area', 'like', "%{$search}%")
+                  ->orWhere('kode_area', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->orderBy('kode_area');
+    }
+
+    /**
+     * Export Area ke CSV.
+     */
+    public function exportCsv(Request $request)
+    {
+        $areas = $this->buildAreaQuery($request)->get();
+        $rows = $areas->map(fn ($area, $i) => [
+            'no' => $i + 1,
+            'kode_area' => $area->kode_area,
+            'nama_area' => $area->nama_area,
+            'keterangan' => $area->keterangan ?? '',
+            'tanggal_dibuat' => $area->created_at?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = ['No', 'Kode Area', 'Nama Area', 'Keterangan', 'Tanggal Dibuat'];
+        $content = $this->toCsvContent($headers, $rows);
+        $filename = $this->generateExportFilename('Area', 'csv');
+
+        return $this->csvResponse($content, $filename);
+    }
+
+    /**
+     * Export Area ke Excel (HTML table format).
+     */
+    public function exportExcel(Request $request)
+    {
+        $areas = $this->buildAreaQuery($request)->get();
+        $rows = $areas->map(fn ($area, $i) => [
+            'no' => $i + 1,
+            'kode_area' => $area->kode_area,
+            'nama_area' => $area->nama_area,
+            'keterangan' => $area->keterangan ?? '',
+            'tanggal_dibuat' => $area->created_at?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = ['No', 'Kode Area', 'Nama Area', 'Keterangan', 'Tanggal Dibuat'];
+        $content = $this->toXlsContent($headers, $rows);
+        $filename = $this->generateExportFilename('Area', 'xls');
+
+        return $this->xlsResponse($content, $filename);
     }
 
     /**
