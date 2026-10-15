@@ -52,6 +52,8 @@ Route::middleware('auth')->group(function () {
         // Export routes: LETAKKAN SEBELUM resource agar tidak tertangkap {area} wildcard
         Route::get('area/exportCsv', [AreaController::class, 'exportCsv'])->name('area.exportCsv');
         Route::get('area/exportExcel', [AreaController::class, 'exportExcel'])->name('area.exportExcel');
+        Route::get('pop/exportCsv', [PopController::class, 'exportCsv'])->name('pop.exportCsv');
+        Route::get('pop/exportExcel', [PopController::class, 'exportExcel'])->name('pop.exportExcel');
 
         Route::resource('area', AreaController::class)->except(['destroy']);
         Route::resource('pop', PopController::class)->except(['destroy']);

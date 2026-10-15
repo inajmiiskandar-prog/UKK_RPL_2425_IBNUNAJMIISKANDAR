@@ -5,12 +5,19 @@ namespace App\Http\Controllers\MasterData;
 use App\Http\Controllers\Controller;
 use App\Models\Pop;
 use App\Models\Area;
+use App\Traits\ExportsTable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PopController extends Controller
 {
-    public function index(Request $request)
+    use ExportsTable;
+
+    /**
+     * Helper: build query dengan filter search + area (dipakai index dan export).
+     * Mengembalikan Builder agar bisa dipaginasi atau di-get().
+     */
+    private function buildPopQuery(Request $request)
     {
         $query = Pop::with('area');
 
@@ -26,11 +33,64 @@ class PopController extends Controller
             $query->where('id_area', $request->area);
         }
 
-        $pops = $query->orderBy('kode_pop')->paginate(10);
+        return $query->orderBy('kode_pop');
+    }
+
+    public function index(Request $request)
+    {
+        $pops = $this->buildPopQuery($request)->paginate(10);
         $pops->appends($request->all());
         $areas = Area::orderBy('nama_area')->get();
 
         return view('master.pop.index', compact('pops', 'areas'));
+    }
+
+    /**
+     * Export POP ke CSV.
+     */
+    public function exportCsv(Request $request)
+    {
+        $pops = $this->buildPopQuery($request)->get();
+        $rows = $pops->map(fn ($pop, $i) => [
+            'no' => $i + 1,
+            'kode_pop' => $pop->kode_pop,
+            'nama_pop' => $pop->nama_pop,
+            'alamat' => $pop->alamat,
+            'area' => $pop->area->nama_area ?? '',
+            'latitude' => $pop->latitude,
+            'longitude' => $pop->longitude,
+            'tanggal_dibuat' => $pop->createdAt?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = ['No', 'Kode POP', 'Nama POP', 'Alamat', 'Area', 'Latitude', 'Longitude', 'Tanggal Dibuat'];
+        $content = $this->toCsvContent($headers, $rows);
+        $filename = $this->generateExportFilename('POP', 'csv');
+
+        return $this->csvResponse($content, $filename);
+    }
+
+    /**
+     * Export POP ke Excel (HTML table format).
+     */
+    public function exportExcel(Request $request)
+    {
+        $pops = $this->buildPopQuery($request)->get();
+        $rows = $pops->map(fn ($pop, $i) => [
+            'no' => $i + 1,
+            'kode_pop' => $pop->kode_pop,
+            'nama_pop' => $pop->nama_pop,
+            'alamat' => $pop->alamat,
+            'area' => $pop->area->nama_area ?? '',
+            'latitude' => $pop->latitude,
+            'longitude' => $pop->longitude,
+            'tanggal_dibuat' => $pop->createdAt?->format('d/m/Y') ?? '',
+        ])->toArray();
+
+        $headers = ['No', 'Kode POP', 'Nama POP', 'Alamat', 'Area', 'Latitude', 'Longitude', 'Tanggal Dibuat'];
+        $content = $this->toXlsContent($headers, $rows);
+        $filename = $this->generateExportFilename('POP', 'xls');
+
+        return $this->xlsResponse($content, $filename);
     }
 
     public function create()
